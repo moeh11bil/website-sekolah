@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Jika file atau direktori ada, gunakan itu
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ %{REQUEST_URI} [END]
+  
+  # Jika tidak, arahkan ke index.html
+  RewriteRule ^ index.html [END]
+</IfModule>

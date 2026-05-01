@@ -1,0 +1,17 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm run start:backend & npm run start:frontend",
+    "dev:with-mock": "cd backend && node mock-server.js & cd ../frontend && npm run dev",
+    "start": "echo 'Please run backend and frontend separately using: cd backend && npm run start and cd frontend && npm run build && npx serve -s build'",
+    "start:backend": "npm run start --prefix backend",
+    "start:frontend": "npm run dev --prefix frontend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

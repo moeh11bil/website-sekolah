@@ -1,0 +1,15 @@
+# Apache Configuration for Backend (Alternative to Nginx)
+# Save as /var/www/alikhlaskarawang/backend/.htaccess or in Apache virtual host
+
+# Enable mod_rewrite
+RewriteEngine On
+
+# Redirect HTTP to HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Proxy API requests to Node.js backend
+RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
+
+# Uploads
+RewriteRule ^uploads/(.*)$ http://localhost:3001/uploads/$1 [P,L]

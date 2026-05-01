@@ -1,0 +1,6 @@
+-- Connect to your MySQL database and run this command to fix the content column length issue:
+
+ALTER TABLE posts MODIFY COLUMN content LONGTEXT NOT NULL;
+
+-- This will change the content column from TEXT to LONGTEXT, allowing up to 4GB of content
+-- LONGTEXT can store much more data than TEXT (which is limited to 65,535 bytes)

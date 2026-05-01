@@ -1,0 +1,1 @@
+const r="https://api.alikhlaskarawang.my.id",n=t=>{if(!t)return null;if(t.startsWith("http"))return t;const s=t.startsWith("/")?t:`/${t}`;return`${r}${s}`},i=t=>t?t.startsWith("http")||t.startsWith("/")||t.startsWith("#")?t:`https://${t}`:"";export{r as A,i as f,n as g};

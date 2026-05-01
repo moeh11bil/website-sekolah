@@ -1,0 +1,2 @@
+Mock backend server listening on http://localhost:3001
+CORS configured to allow requests from http://localhost:5173

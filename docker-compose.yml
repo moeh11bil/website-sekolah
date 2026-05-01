@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sekolah-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DOMAIN=${DOMAIN:-alikhlaskarawang.my.id}
+      - FRONTEND_URL=${FRONTEND_URL:-https://alikhlaskarawang.my.id}
+      - BACKEND_URL=${BACKEND_URL:-https://alikhlaskarawang.my.id/api}
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USER=${DB_USER:-sekolah}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-school_website}
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sekolah-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sekolah-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - sekolah-network
+
+  db:
+    image: mysql:8.0
+    container_name: sekolah-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME:-sekolah_modern}
+      - MYSQL_USER=${DB_USER:-sekolah}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/db_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sekolah-network
+
+networks:
+  sekolah-network:
+    driver: bridge
+
+volumes:
+  db_data:
