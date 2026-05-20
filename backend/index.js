@@ -145,18 +145,21 @@ app.get('/api/admin/public/gallery', async (req, res) => {
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
-console.log('INDEX: registering routes...');
-app.get('/api/git-test', (req, res) => {
-  console.log('INDEX: /api/git-test called!');
-  const rootDir = process.env.PROJECT_DIR || '/www/wwwroot/website-sekolah';
-  const { execSync } = require('child_process');
-  try {
-    const commit = execSync('git rev-parse --short HEAD', { cwd: rootDir }).toString().trim();
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: rootDir }).toString().trim();
-    res.json({ success: true, root_dir: rootDir, commit, branch });
-  } catch (e) {
-    res.json({ success: false, root_dir: rootDir, error: e.message });
+// Route lister for debugging
+app.get('/api/routes', (req, res) => {
+  const routes = [];
+  function extractRoutes(layer, basePath) {
+    if (layer.route) {
+      const methods = Object.keys(layer.route.methods).join(',').toUpperCase();
+      routes.push({ path: basePath + layer.route.path, methods });
+    } else if (layer.name === 'router' && layer.handle.stack) {
+      layer.handle.stack.forEach(inner => extractRoutes(inner, basePath));
+    } else if (layer.name === 'bound dispatch' && layer.regexp) {
+      routes.push({ path: layer.regexp.toString(), methods: '?' });
+    }
   }
+  app._router.stack.forEach(layer => extractRoutes(layer, ''));
+  res.json(routes);
 });
 
 app.use('/api/update', updateRoutes);
