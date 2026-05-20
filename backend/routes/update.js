@@ -7,10 +7,10 @@ const util = require('util');
 const crypto = require('crypto');
 
 const execAsync = util.promisify(exec);
-const ROOT_DIR = path.join(__dirname, '../..');
-const BACKEND_DIR = path.join(__dirname, '..');
-const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
-const SCRIPT_PATH = path.join(BACKEND_DIR, 'scripts/update.sh');
+const ROOT_DIR = process.env.PROJECT_DIR || path.join(__dirname, '../..');
+const BACKEND_DIR = process.env.BACKEND_DIR || path.join(__dirname, '..');
+const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(ROOT_DIR, 'frontend');
+const SCRIPT_PATH = path.join(__dirname, '..', 'scripts', 'update.sh');
 const LOG_DIR = path.join(BACKEND_DIR, 'backups');
 
 const router = express.Router();

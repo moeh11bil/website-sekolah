@@ -1,13 +1,12 @@
 #!/bin/bash
 LOG_FILE="$1"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BACKEND_DIR="$(dirname "$SCRIPT_DIR")"
-PROJECT_DIR="$(dirname "$BACKEND_DIR")"
-FRONTEND_DIR="$PROJECT_DIR/frontend"
+BACKEND_DIR="${PROJECT_DIR:-$(dirname "$SCRIPT_DIR")}"
+PROJECT_DIR="${PROJECT_DIR:-$(dirname "$BACKEND_DIR")}"
+FRONTEND_DIR="${FRONTEND_DIR:-$PROJECT_DIR/frontend}"
 
-# === PRODUCTION PATHS (sesuaikan dengan aaPanel) ===
-FRONTEND_DEPLOY="/www/wwwroot/alikhlaskarawang.my.id"
-BACKEND_DEPLOY="/www/wwwroot/192.168.110.196/backend"
+FRONTEND_DEPLOY="${FRONTEND_DEPLOY:-}"
+BACKEND_DEPLOY="${BACKEND_DEPLOY:-}"
 
 log() {
   echo "[$(date '+%H:%M:%S')] $1" >> "$LOG_FILE"
@@ -34,21 +33,26 @@ cd "$FRONTEND_DIR" && timeout 120 npm install --prefer-offline --no-audit --no-f
 log "Build frontend..."
 cd "$FRONTEND_DIR" && timeout 120 npm run build >> "$LOG_FILE" 2>&1 || true
 
-log "Copy frontend build ke $FRONTEND_DEPLOY..."
-mkdir -p "$FRONTEND_DEPLOY"
-rsync -a --delete "$FRONTEND_DIR/build/" "$FRONTEND_DEPLOY/" >> "$LOG_FILE" 2>&1
+if [ -n "$FRONTEND_DEPLOY" ]; then
+  log "Copy frontend build ke $FRONTEND_DEPLOY..."
+  mkdir -p "$FRONTEND_DEPLOY"
+  rsync -a --delete --exclude='.user.ini' "$FRONTEND_DIR/build/" "$FRONTEND_DEPLOY/" >> "$LOG_FILE" 2>&1
+fi
 
-log "Copy backend ke $BACKEND_DEPLOY..."
-mkdir -p "$BACKEND_DEPLOY"
-rsync -a --delete \
-  --exclude='node_modules' \
-  --exclude='.env' \
-  --exclude='backups' \
-  --exclude='uploads' \
-  "$BACKEND_DIR/" "$BACKEND_DEPLOY/" >> "$LOG_FILE" 2>&1
+if [ -n "$BACKEND_DEPLOY" ]; then
+  log "Copy backend ke $BACKEND_DEPLOY..."
+  mkdir -p "$BACKEND_DEPLOY"
+  rsync -a --delete \
+    --exclude='node_modules' \
+    --exclude='.env' \
+    --exclude='backups' \
+    --exclude='uploads' \
+    --exclude='.user.ini' \
+    "$BACKEND_DIR/" "$BACKEND_DEPLOY/" >> "$LOG_FILE" 2>&1
 
-log "Install backend dependencies (production)..."
-cd "$BACKEND_DEPLOY" && npm install --omit=dev --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
+  log "Install backend dependencies (production)..."
+  cd "$BACKEND_DEPLOY" && npm install --omit=dev --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
+fi
 
 log "Update selesai! Restart server via pm2..."
 pm2 restart backend --update-env >> "$LOG_FILE" 2>&1
