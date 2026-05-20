@@ -79,7 +79,8 @@ router.get('/info', protect, authorize(['admin']), async (req, res) => {
       currentCommit = await execGit(ROOT_DIR, 'rev-parse --short HEAD');
       currentBranch = await execGit(ROOT_DIR, 'rev-parse --abbrev-ref HEAD');
     } catch (e) {
-      error = 'Git repo tidak ditemukan';
+      console.error('UPDATE: git error:', e.message, 'ROOT_DIR:', ROOT_DIR);
+      error = 'Git repo tidak ditemukan: ' + e.message;
     }
 
     try {
