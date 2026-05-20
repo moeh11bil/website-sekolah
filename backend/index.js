@@ -14,7 +14,9 @@ const categoryRoutes = require('./routes/categories');
 const postRoutes = require('./routes/posts');
 const adminRoutes = require('./routes/admin');
 const quickLinksRoutes = require('./routes/quickLinks');
-const updateRoutes = require('./routes/update');
+const { listRoutes } = require('./utils/route-debug');
+
+// ... (other requires)
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -146,6 +148,10 @@ app.get('/api/admin/public/gallery', async (req, res) => {
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
 app.use('/api/update', updateRoutes);
+
+app.get('/api/routes', (req, res) => {
+  res.json(listRoutes(app));
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ 
