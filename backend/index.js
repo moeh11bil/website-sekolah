@@ -145,23 +145,6 @@ app.get('/api/admin/public/gallery', async (req, res) => {
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
-// Route lister for debugging
-app.get('/api/routes', (req, res) => {
-  const routes = [];
-  function extractRoutes(layer, basePath) {
-    if (layer.route) {
-      const methods = Object.keys(layer.route.methods).join(',').toUpperCase();
-      routes.push({ path: basePath + layer.route.path, methods });
-    } else if (layer.name === 'router' && layer.handle.stack) {
-      layer.handle.stack.forEach(inner => extractRoutes(inner, basePath));
-    } else if (layer.name === 'bound dispatch' && layer.regexp) {
-      routes.push({ path: layer.regexp.toString(), methods: '?' });
-    }
-  }
-  app._router.stack.forEach(layer => extractRoutes(layer, ''));
-  res.json(routes);
-});
-
 app.use('/api/update', updateRoutes);
 
 app.get('/api/health', (req, res) => {
@@ -200,10 +183,16 @@ app.use((req, res, next) => {
   res.sendFile(path.join(frontendBuild, 'index.html'));
 });
 
+// DEBUG: test route at the very end
+app.get('/api/git-test', (req, res) => {
+  res.json({ success: true, message: 'git-test works!' });
+});
+
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
+  console.log('INDEX: server started on port', PORT);
 });
 
 module.exports = app;
