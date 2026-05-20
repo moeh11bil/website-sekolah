@@ -8,13 +8,7 @@ const schoolInfoRoutes = require('./schoolInfo');
 const themeRoutes = require('./theme');
 const staffTestimonialsRoutes = require('./staffTestimonials');
 
-router.use('/header', headerRoutes);
-router.use('/about', aboutRoutes);
-router.use('/gallery', galleryRoutes);
-router.use('/school-info', schoolInfoRoutes);
-router.use('/theme', themeRoutes);
-router.use('/staff-testimonials', staffTestimonialsRoutes);
-
+// Public routes harus SEBELUM subrouter biar tidak di-intercept
 router.get('/public/gallery', async (req, res) => {
   const { pool } = require('../../config/db');
   try {
@@ -47,6 +41,14 @@ router.get('/public/gallery', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Subrouter mounts untuk admin CRUD
+router.use('/header', headerRoutes);
+router.use('/about', aboutRoutes);
+router.use('/gallery', galleryRoutes);
+router.use('/school-info', schoolInfoRoutes);
+router.use('/theme', themeRoutes);
+router.use('/staff-testimonials', staffTestimonialsRoutes);
 
 router.get('/public/header', async (req, res) => {
   const { pool } = require('../../config/db');
