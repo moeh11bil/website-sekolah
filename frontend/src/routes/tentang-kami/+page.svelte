@@ -162,22 +162,6 @@
 <svelte:head>
   <title>Tentang Kami - {$siteName}</title>
   <meta name="description" content="Informasi tentang sejarah, visi, misi, fasilitas, dan kontak sekolah kami." />
-  <style>
-    .prose ul {
-      padding-left: 1.5rem;
-      margin: 0.5rem 0;
-      list-style-type: disc;
-    }
-    .prose ol {
-      padding-left: 1.5rem;
-      margin: 0.5rem 0;
-      list-style-type: decimal;
-    }
-    .prose li {
-      margin: 0.25rem 0;
-      display: list-item;
-    }
-  </style>
 </svelte:head>
 
 <div class="max-w-6xl mx-auto">
@@ -209,6 +193,10 @@
             <img 
               src={getImageUrl(aboutPage.image_url)} 
               alt="Gambar Sekolah" 
+              width="1200"
+              height="600"
+              loading="lazy"
+              decoding="async"
               class="w-full h-96 object-cover"
             />
           </div>
@@ -314,3 +302,20 @@
     {/if}
   </section>
 </div>
+
+<style>
+  :global(.prose ul) {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+    list-style-type: disc;
+  }
+  :global(.prose ol) {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+    list-style-type: decimal;
+  }
+  :global(.prose li) {
+    margin: 0.25rem 0;
+    display: list-item;
+  }
+</style>

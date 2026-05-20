@@ -1,42 +1,9 @@
 const express = require('express');
 const { pool } = require('../config/db');
 const { protect, optionalAuth, authorize } = require('../middleware/authMiddleware');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { imageUpload, deleteOldImage, cleanupImage } = require('../utils/imageUpload');
 
 const router = express.Router();
-
-const uploadsDir = path.join(__dirname, '../uploads/posts');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 1024 * 1024 * 5 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) return cb(null, true);
-    cb(new Error('Only images (jpeg, jpg, png, gif) are allowed!'));
-  }
-});
-
-const cleanupFile = (file) => {
-  if (file) {
-    fs.unlink(file.path, (err) => { if (err) console.error('Error cleaning up file:', err); });
-  }
-};
 
 router.get('/', async (req, res) => {
   try {
@@ -148,13 +115,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/', protect, authorize(['teacher', 'student', 'admin']), upload.single('image'), async (req, res) => {
+router.post('/', protect, authorize(['teacher', 'student', 'admin']), imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
   const { title, content, category_id, status: requestedStatus } = req.body;
   const { id: author_id, role } = req.user;
-  const imageUrl = req.file ? `/uploads/posts/${req.file.filename}` : null;
+  const imageUrl = req.imageUrl || null;
 
   if (!title || !content) {
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     return res.status(400).json({ message: 'Title and content are required' });
   }
 
@@ -179,28 +146,29 @@ router.post('/', protect, authorize(['teacher', 'student', 'admin']), upload.sin
     res.status(201).json({ message: 'Post created successfully', postId: result.insertId, status, imageUrl });
   } catch (error) {
     console.error('Create post error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.put('/:id', protect, upload.single('image'), async (req, res) => {
-  const { title, content, category_id, status } = req.body;
+router.put('/:id', protect, imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
+  const { title, content, category_id, status, remove_image } = req.body;
   const { id: userId, role } = req.user;
   const { id } = req.params;
-  const imageUrl = req.file ? `/uploads/posts/${req.file.filename}` : null;
+  const imageUrl = req.imageUrl || null;
+  const shouldRemoveImage = remove_image === 'true';
 
   try {
-    const [postData] = await pool.execute('SELECT author_id, status FROM posts WHERE id = ?', [id]);
+    const [postData] = await pool.execute('SELECT author_id, image_url, status FROM posts WHERE id = ?', [id]);
     const post = postData[0];
 
     if (!post) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(404).json({ message: 'Post not found' });
     }
 
     if (role !== 'admin' && post.author_id !== userId) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(403).json({ message: 'Not authorized to edit this post' });
     }
 
@@ -212,6 +180,10 @@ router.put('/:id', protect, upload.single('image'), async (req, res) => {
     if (category_id !== undefined && category_id !== '') { updateFields.push('category_id = ?'); queryParams.push(category_id); }
     else if (category_id === '') { updateFields.push('category_id = ?'); queryParams.push(null); }
     if (imageUrl) { updateFields.push('image_url = ?'); queryParams.push(imageUrl); }
+    else if (shouldRemoveImage) {
+      updateFields.push('image_url = ?');
+      queryParams.push(null);
+    }
 
     if (status && role === 'admin') {
       updateFields.push('status = ?');
@@ -229,7 +201,7 @@ router.put('/:id', protect, upload.single('image'), async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(400).json({ message: 'No fields to update' });
     }
 
@@ -237,14 +209,16 @@ router.put('/:id', protect, upload.single('image'), async (req, res) => {
     const [result] = await pool.execute(`UPDATE posts SET ${updateFields.join(', ')} WHERE id = ?`, queryParams);
 
     if (result.affectedRows === 0) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    res.json({ message: 'Post updated successfully', imageUrl });
+    if (imageUrl) deleteOldImage(post.image_url);
+    else if (shouldRemoveImage && post.image_url) deleteOldImage(post.image_url);
+    res.json({ message: 'Post updated successfully', imageUrl: shouldRemoveImage ? null : (imageUrl || post.image_url) });
   } catch (error) {
     console.error('Update post error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -269,13 +243,15 @@ router.delete('/:id', protect, async (req, res) => {
   const { id: userId, role } = req.user;
 
   try {
-    const [postData] = await pool.execute('SELECT author_id FROM posts WHERE id = ?', [id]);
+    const [postData] = await pool.execute('SELECT author_id, image_url FROM posts WHERE id = ?', [id]);
     const post = postData[0];
 
     if (!post) return res.status(404).json({ message: 'Post not found' });
     if (role !== 'admin' && post.author_id !== userId) return res.status(403).json({ message: 'Not authorized' });
 
     await pool.execute('DELETE FROM posts WHERE id = ?', [id]);
+
+    if (post.image_url) deleteOldImage(post.image_url);
     res.json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Delete post error:', error);

@@ -18,10 +18,20 @@ const createAuthStore = () => {
   const storedUser = browser ? localStorage.getItem('user') : null;
   const storedToken = browser ? localStorage.getItem('token') : null;
 
+  let parsedUser: User | null = null;
+  if (storedUser) {
+    try {
+      parsedUser = JSON.parse(storedUser);
+      if (!parsedUser || !parsedUser.role) parsedUser = null;
+    } catch {
+      parsedUser = null;
+    }
+  }
+
   const initial: AuthState = {
-    user: storedUser ? JSON.parse(storedUser) : null,
-    token: storedToken,
-    isAuthenticated: !!storedToken
+    user: parsedUser,
+    token: parsedUser ? storedToken : null,
+    isAuthenticated: !!parsedUser && !!storedToken
   };
 
   const { subscribe, set, update } = writable<AuthState>(initial);

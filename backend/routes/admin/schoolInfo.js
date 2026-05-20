@@ -1,36 +1,9 @@
 const express = require('express');
 const { pool } = require('../../config/db');
 const { protect, authorize } = require('../../middleware/authMiddleware');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { imageUpload, deleteOldImage, cleanupImage } = require('../../utils/imageUpload');
 
 const router = express.Router();
-
-const uploadsDir = path.join(__dirname, '../../uploads/pages');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 1024 * 1024 * 5 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) return cb(null, true);
-    cb(new Error('Only images (jpeg, jpg, png, gif) are allowed!'));
-  }
-});
 
 router.get('/', protect, authorize(['admin']), async (req, res) => {
   try {
@@ -56,18 +29,15 @@ router.get('/public', async (req, res) => {
   }
 });
 
-router.post('/', protect, authorize(['admin']), upload.single('logo'), async (req, res) => {
-  if (!req.body) {
-    cleanupFile(req.file);
-    return res.status(400).json({ message: 'Request body is required' });
-  }
+router.post('/', protect, authorize(['admin']), imageUpload({ subDir: 'pages', fieldName: 'logo', width: 300, quality: 90 }), async (req, res) => {
+  if (!req.body) { cleanupImage(req.imageFilePath); return res.status(400).json({ message: 'Request body is required' }); }
 
   const { school_name, school_moto } = req.body;
-  const logoUrl = req.file ? `/uploads/pages/${req.file.filename}` : null;
+  const logoUrl = req.imageUrl || null;
   const deleteLogo = req.body.delete_logo === 'true';
 
   if (!school_name || !school_moto) {
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     return res.status(400).json({ message: 'School name and motto are required' });
   }
 
@@ -109,21 +79,21 @@ router.post('/', protect, authorize(['admin']), upload.single('logo'), async (re
     res.json({ message: 'School information saved successfully' });
   } catch (error) {
     console.error('Save school info error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.put('/:id', protect, authorize(['admin']), upload.single('logo'), async (req, res) => {
+router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'pages', fieldName: 'logo', width: 300, quality: 90 }), async (req, res) => {
   const { id } = req.params;
   const { school_name, school_moto } = req.body;
-  const logoUrl = req.file ? `/uploads/pages/${req.file.filename}` : null;
+  const logoUrl = req.imageUrl || null;
   const deleteLogo = req.body.delete_logo === 'true';
 
   try {
     const [existing] = await pool.execute('SELECT id, logo_url FROM school_info WHERE id = ?', [id]);
     if (existing.length === 0) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(404).json({ message: 'School info not found' });
     }
 
@@ -148,7 +118,7 @@ router.put('/:id', protect, authorize(['admin']), upload.single('logo'), async (
     res.json({ message: 'School information updated successfully' });
   } catch (error) {
     console.error('Update school info error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -167,20 +137,5 @@ router.delete('/:id', protect, authorize(['admin']), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-function deleteOldImage(imagePath) {
-  if (imagePath) {
-    const fullPath = path.join(__dirname, '../../', imagePath);
-    if (fs.existsSync(fullPath)) {
-      fs.unlink(fullPath, (err) => { if (err) console.error('Error deleting old image:', err); });
-    }
-  }
-}
-
-function cleanupFile(file) {
-  if (file) {
-    fs.unlink(file.path, (err) => { if (err) console.error('Error cleaning up file:', err); });
-  }
-}
 
 module.exports = router;

@@ -14,6 +14,7 @@ const categoryRoutes = require('./routes/categories');
 const postRoutes = require('./routes/posts');
 const adminRoutes = require('./routes/admin');
 const quickLinksRoutes = require('./routes/quickLinks');
+const updateRoutes = require('./routes/update');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -84,16 +85,21 @@ app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 3. Static Files Middleware (Dengan header yang sangat longgar)
+// 3. Static Files Middleware (Dengan header yang sangat longgar + cache)
 const uploadsDir = path.join(__dirname, 'uploads');
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Access-Control-Allow-Origin', '*');
   next();
 }, express.static(uploadsDir, {
-  setHeaders: (res) => {
+  maxAge: '7d',
+  immutable: true,
+  setHeaders: (res, filePath) => {
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (filePath.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    }
   }
 }));
 
@@ -113,6 +119,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
+app.use('/api/update', updateRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -137,6 +144,17 @@ app.get('/', (req, res) => {
       admin: '/api/admin'
     }
   });
+});
+
+// Serve frontend static files
+const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
+app.use(express.static(frontendBuild));
+
+// SPA fallback: serve index.html for any non-API, non-upload GET route
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next();
+  res.sendFile(path.join(frontendBuild, 'index.html'));
 });
 
 app.use(notFoundHandler);

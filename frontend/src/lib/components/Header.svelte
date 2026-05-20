@@ -32,11 +32,14 @@
     unsubscribe = schoolInfoStore.subscribe(value => {
       schoolData = value;
     });
-    fetchSchoolInfo();
     if ($page.url) {
       currentPath = $page.url.pathname;
     }
   });
+
+  $: if (browser && schoolInfoStore && !schoolData) {
+    fetchSchoolInfo();
+  }
 
   $: if (browser && $page.url && $page.url.pathname !== currentPath) {
     currentPath = $page.url.pathname;
@@ -98,7 +101,11 @@
         {#if schoolData.logo_url}
           <img
             src={getImageUrl(schoolData.logo_url)}
-            alt="Logo"
+            alt={schoolData.school_name || 'Logo'}
+            width="32"
+            height="32"
+            fetchpriority="high"
+            decoding="async"
             class="w-8 h-8 rounded-full mr-2 object-contain border border-white"
           />
         {:else}

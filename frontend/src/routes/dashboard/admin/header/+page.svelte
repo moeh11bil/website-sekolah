@@ -281,6 +281,8 @@
                   <img 
                     src={imagePreviewUrl || getImageUrl(header?.image_url)} 
                     alt="Header Preview" 
+                    loading="lazy"
+                    decoding="async"
                     class="w-full h-48 object-cover" 
                   />
                   <div class="p-3 bg-gray-50">

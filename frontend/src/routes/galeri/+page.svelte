@@ -15,40 +15,42 @@
   }
 
   let galleryItems: GalleryItem[] = [];
-  let displayedItems: GalleryItem[] = [];
   let loading = true;
   let error: string | null = null;
-  const itemsPerPage = 6;
-  let currentPage = 0;
+  let currentPage = 1;
+  let hasMore = true;
+  const limit = 6;
 
   function formatDate(dateString: string) {
     const date = new Date(dateString);
     return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
   }
 
-  function loadMoreItems() {
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const newItems = galleryItems.slice(startIndex, endIndex);
-
-    displayedItems = [...displayedItems, ...newItems];
-    currentPage++;
+  async function loadMoreItems() {
+    if (loading || !hasMore) return;
+    loading = true;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/public/gallery?page=${currentPage}&limit=${limit}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      galleryItems = [...galleryItems, ...data.items];
+      hasMore = data.pagination.hasMore;
+      currentPage = data.pagination.page + 1;
+    } catch (e: any) {
+      error = e.message || 'Terjadi kesalahan saat memuat galeri';
+    } finally {
+      loading = false;
+    }
   }
 
   onMount(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/admin/public/gallery`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      galleryItems = await response.json();
-
-      // Load first set of items
-      if (galleryItems.length > 0) {
-        const initialItems = galleryItems.slice(0, itemsPerPage);
-        displayedItems = initialItems;
-        currentPage = 1;
-      }
+      const response = await fetch(`${API_URL}/api/admin/public/gallery?page=1&limit=${limit}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      galleryItems = data.items;
+      hasMore = data.pagination.hasMore;
+      currentPage = 2;
     } catch (e: any) {
       error = e.message || 'Terjadi kesalahan saat memuat galeri';
     } finally {
@@ -85,7 +87,7 @@
       </div>
     {:else if galleryItems.length > 0}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {#each displayedItems as item}
+        {#each galleryItems as item}
           <div class="group">
             <div class="bg-gradient-to-br from-white to-primary-50 rounded-2xl shadow-xl overflow-hidden border border-primary-100 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
               <div class="relative overflow-hidden">
@@ -111,12 +113,13 @@
         {/each}
       </div>
 
-      {#if displayedItems.length < galleryItems.length}
+      {#if hasMore}
         <div class="text-center mt-12">
           <button
-            class="mt-6 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105"
-            on:click={loadMoreItems}>
-            Lihat Lebih Banyak
+            class="mt-6 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50"
+            on:click={loadMoreItems}
+            disabled={loading}>
+            {loading ? 'Memuat...' : 'Lihat Lebih Banyak'}
           </button>
         </div>
       {/if}

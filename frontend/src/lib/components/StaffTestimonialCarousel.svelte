@@ -96,6 +96,10 @@
                       <img 
                         src={getImageUrl(testimonials[currentIndex].image_url)} 
                         alt={testimonials[currentIndex].name}
+                        width="128"
+                        height="128"
+                        loading="lazy"
+                        decoding="async"
                         class="w-full h-full rounded-3xl object-cover object-center border-4 border-primary-200 shadow-xl"
                       />
                     </div>
@@ -104,8 +108,8 @@
                       {testimonials[currentIndex].name.charAt(0)}
                     </div>
                   {/if}
-                  <h4 class="font-bold text-primary-800 text-xl">{testimonials[currentIndex].name}</h4>
-                  <p class="text-primary-600 text-base">{testimonials[currentIndex].position}</p>
+                  <h4 class="font-bold text-primary-800 text-lg md:text-xl text-center leading-tight max-w-xs sm:max-w-sm break-words">{testimonials[currentIndex].name}</h4>
+                  <p class="text-primary-600 text-sm md:text-base text-center">{testimonials[currentIndex].position}</p>
                 </div>
               </div>
             {/key}

@@ -1,36 +1,9 @@
 const express = require('express');
 const { pool } = require('../../config/db');
 const { protect, authorize } = require('../../middleware/authMiddleware');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { imageUpload, deleteOldImage, cleanupImage } = require('../../utils/imageUpload');
 
 const router = express.Router();
-
-const uploadsDir = path.join(__dirname, '../../uploads/pages');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 1024 * 1024 * 5 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) return cb(null, true);
-    cb(new Error('Only images (jpeg, jpg, png, gif) are allowed!'));
-  }
-});
 
 router.get('/', protect, authorize(['admin']), async (req, res) => {
   try {
@@ -56,17 +29,14 @@ router.get('/public', async (req, res) => {
   }
 });
 
-router.post('/', protect, authorize(['admin']), upload.single('image'), async (req, res) => {
-  if (!req.body) {
-    cleanupFile(req.file);
-    return res.status(400).json({ message: 'Request body is required' });
-  }
+router.post('/', protect, authorize(['admin']), imageUpload({ subDir: 'pages', width: 1200 }), async (req, res) => {
+  if (!req.body) { cleanupImage(req.imageFilePath); return res.status(400).json({ message: 'Request body is required' }); }
 
   const { sejarah, visi, misi, fasilitas, kontak, status } = req.body;
-  const imageUrl = req.file ? `/uploads/pages/${req.file.filename}` : null;
+  const imageUrl = req.imageUrl || null;
 
   if (!sejarah && !visi && !misi && !fasilitas && !kontak) {
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     return res.status(400).json({ message: 'At least one field is required' });
   }
 
@@ -104,15 +74,15 @@ router.post('/', protect, authorize(['admin']), upload.single('image'), async (r
     res.json({ message: 'About configuration saved successfully' });
   } catch (error) {
     console.error('Save about config error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.put('/:id', protect, authorize(['admin']), upload.single('image'), async (req, res) => {
+router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'pages', width: 1200 }), async (req, res) => {
   const { id } = req.params;
   const { sejarah, visi, misi, fasilitas, kontak, status } = req.body;
-  const imageUrl = req.file ? `/uploads/pages/${req.file.filename}` : null;
+  const imageUrl = req.imageUrl || null;
 
   try {
     const [existing] = await pool.execute(
@@ -121,7 +91,7 @@ router.put('/:id', protect, authorize(['admin']), upload.single('image'), async 
     );
 
     if (existing.length === 0) {
-      cleanupFile(req.file);
+      cleanupImage(req.imageFilePath);
       return res.status(404).json({ message: 'About config not found' });
     }
 
@@ -140,7 +110,7 @@ router.put('/:id', protect, authorize(['admin']), upload.single('image'), async 
     res.json({ message: 'About configuration updated successfully' });
   } catch (error) {
     console.error('Update about config error:', error);
-    cleanupFile(req.file);
+    cleanupImage(req.imageFilePath);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -159,20 +129,5 @@ router.delete('/:id', protect, authorize(['admin']), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-function deleteOldImage(imagePath) {
-  if (imagePath) {
-    const fullPath = path.join(__dirname, '../../', imagePath);
-    if (fs.existsSync(fullPath)) {
-      fs.unlink(fullPath, (err) => { if (err) console.error('Error deleting old image:', err); });
-    }
-  }
-}
-
-function cleanupFile(file) {
-  if (file) {
-    fs.unlink(file.path, (err) => { if (err) console.error('Error cleaning up file:', err); });
-  }
-}
 
 module.exports = router;

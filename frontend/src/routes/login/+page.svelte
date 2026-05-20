@@ -21,9 +21,12 @@
         setTimeout(() => { successMessage = null; }, 3000);
     }
     auth.subscribe((state) => {
-      if (state.isAuthenticated) {
-        goto(`/dashboard/${state.user?.role}`);
+      if (state.isAuthenticated && state.user?.role) {
+        goto(`/dashboard/${state.user.role}`);
         return;
+      }
+      if (state.isAuthenticated && !state.user?.role) {
+        auth.logout();
       }
       isCheckingAuth = false;
     });

@@ -160,6 +160,8 @@
             <img 
               src={getImageUrl(item.image_url)} 
               alt={item.title}
+              loading="lazy"
+              decoding="async"
               class="w-full h-48 object-cover"
             />
           {:else}

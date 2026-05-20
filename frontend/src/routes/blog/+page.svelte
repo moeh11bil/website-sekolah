@@ -5,6 +5,8 @@
 
   const siteName = getContext<Readable<string>>('siteNameStore');
 
+  import { getImageUrl } from '$lib/config';
+
   interface Post {
     id: number;
     title: string;
@@ -12,6 +14,7 @@
     author: string;
     category_name: string;
     published_at: string;
+    image_url?: string | null;
   }
 
   interface Pagination {
@@ -192,6 +195,17 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {#each posts as post (post.id)}
           <a href="/blog/{post.id}" class="block bg-gradient-to-br from-white to-primary-50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-primary-100 overflow-hidden">
+            {#if post.image_url}
+              <div class="h-48 overflow-hidden">
+                <img
+                  src={getImageUrl(post.image_url)}
+                  alt={post.title}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+                />
+              </div>
+            {/if}
             <div class="p-6">
               <div class="flex justify-between items-start mb-3">
                 <span class="text-xs font-semibold px-3 py-1 bg-primary-100 text-primary-700 rounded-full uppercase tracking-wider">
@@ -201,24 +215,6 @@
               </div>
               <h2 class="text-xl font-bold text-primary-800 mb-3 line-clamp-2">{post.title}</h2>
               <div class="text-gray-600 mb-4 line-clamp-3 prose prose-sm max-w-none">
-                <style>
-                  .prose ul {
-                    list-style-type: disc;
-                    padding-left: 1rem;
-                    margin-top: 0.25rem;
-                    margin-bottom: 0.25rem;
-                  }
-                  .prose ol {
-                    list-style-type: decimal;
-                    padding-left: 1rem;
-                    margin-top: 0.25rem;
-                    margin-bottom: 0.25rem;
-                  }
-                  .prose li {
-                    margin-top: 0.125rem;
-                    margin-bottom: 0.125rem;
-                  }
-                </style>
                 {@html post.content_snippet + '...'}
               </div>
               <div class="flex items-center pt-4 border-t border-primary-100">
@@ -282,3 +278,22 @@
     {/if}
   </section>
 </div>
+
+<style>
+  :global(.prose ul) {
+    list-style-type: disc;
+    padding-left: 1rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  :global(.prose ol) {
+    list-style-type: decimal;
+    padding-left: 1rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  :global(.prose li) {
+    margin-top: 0.125rem;
+    margin-bottom: 0.125rem;
+  }
+</style>

@@ -1,0 +1,163 @@
+const express = require('express');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { exec, spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+const util = require('util');
+const crypto = require('crypto');
+
+const execAsync = util.promisify(exec);
+const ROOT_DIR = path.join(__dirname, '../..');
+const BACKEND_DIR = path.join(__dirname, '..');
+const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
+const SCRIPT_PATH = path.join(BACKEND_DIR, 'scripts/update.sh');
+const LOG_DIR = path.join(BACKEND_DIR, 'backups');
+
+const router = express.Router();
+
+let currentJob = null;
+
+function isRunning(pid) {
+  try {
+    return process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+}
+
+function cleanupJob() {
+  currentJob = null;
+  try { fs.unlinkSync(path.join(LOG_DIR, 'update.lock')); } catch (e) {}
+}
+
+function getVersion() {
+  try {
+    return require(path.join(BACKEND_DIR, 'package.json')).version || '1.0.0';
+  } catch {
+    return '1.0.0';
+  }
+}
+
+async function execGit(dir, cmd) {
+  const { stdout } = await execAsync(`git ${cmd}`, { cwd: dir, timeout: 30000 });
+  return stdout.trim();
+}
+
+function logFile(id) {
+  return path.join(LOG_DIR, `update-${id}.log`);
+}
+
+router.get('/info', protect, authorize(['admin']), async (req, res) => {
+  try {
+    let currentCommit = '-';
+    let currentBranch = '-';
+    let remoteUrl = '-';
+    let behind = null;
+    let hasRemote = false;
+    let error = null;
+
+    try {
+      currentCommit = await execGit(ROOT_DIR, 'rev-parse --short HEAD');
+      currentBranch = await execGit(ROOT_DIR, 'rev-parse --abbrev-ref HEAD');
+    } catch (e) {
+      error = 'Git repo tidak ditemukan';
+    }
+
+    try {
+      remoteUrl = await execGit(ROOT_DIR, 'remote get-url origin');
+      hasRemote = true;
+    } catch (e) {
+      remoteUrl = '(belum diatur)';
+    }
+
+    if (hasRemote) {
+      try {
+        await execGit(ROOT_DIR, 'fetch origin main --depth=1 2>&1');
+        const count = await execGit(ROOT_DIR, 'rev-list --count HEAD..origin/main');
+        behind = parseInt(count) || 0;
+      } catch (e) {
+        behind = -1;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        version: getVersion(),
+        branch: currentBranch,
+        commit: currentCommit,
+        remote_url: remoteUrl,
+        behind,
+        has_remote: hasRemote,
+        running: currentJob !== null,
+        error
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/apply', protect, authorize(['admin']), async (req, res) => {
+  if (currentJob) {
+    return res.status(400).json({ success: false, message: 'Update sedang berjalan' });
+  }
+
+  const jobId = Date.now().toString(36) + crypto.randomBytes(4).toString('hex');
+  const logPath = logFile(jobId);
+
+  const script = spawn('bash', [SCRIPT_PATH, logPath], {
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, HOME: process.env.HOME }
+  });
+
+  currentJob = { id: jobId, pid: script.pid, logPath };
+
+  script.unref();
+
+  res.json({
+    success: true,
+    message: 'Update dimulai',
+    job_id: jobId
+  });
+});
+
+router.get('/status/:jobId', protect, authorize(['admin']), async (req, res) => {
+  const jobId = req.params.jobId;
+  const logPath = logFile(jobId);
+
+  if (!fs.existsSync(logPath)) {
+    cleanupJob();
+    return res.json({ success: true, data: { running: false, logs: [], done: false } });
+  }
+
+  const content = fs.readFileSync(logPath, 'utf-8');
+  const lines = content.trim().split('\n').filter(Boolean);
+  const logs = lines.map(l => ({ time: new Date().toISOString(), message: l }));
+  const done = content.includes('DONE');
+
+  if (done) {
+    cleanupJob();
+    return res.json({
+      success: true,
+      data: { running: false, logs, done }
+    });
+  }
+
+  let running = false;
+  if (currentJob && currentJob.id === jobId) {
+    running = isRunning(currentJob.pid);
+  }
+
+  if (!running) {
+    cleanupJob();
+  }
+
+  res.json({
+    success: true,
+    data: { running, logs, done }
+  });
+});
+
+module.exports = router;

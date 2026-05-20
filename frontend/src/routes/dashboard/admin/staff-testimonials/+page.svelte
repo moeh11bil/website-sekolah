@@ -302,6 +302,8 @@
                     <img 
                       src={getImageUrl(staff.image_url)} 
                       alt={staff.name}
+                      loading="lazy"
+                      decoding="async"
                       class="w-full h-full rounded-xl object-cover object-center border-2 border-primary-200 shadow-sm"
                     />
                   {:else}
@@ -439,6 +441,8 @@
                 <img 
                   src={imagePreviewUrl} 
                   alt="Preview" 
+                  loading="lazy"
+                  decoding="async"
                   class="w-full h-full object-cover object-center rounded-2xl border-4 border-primary-200 shadow-md"
                 />
               </div>

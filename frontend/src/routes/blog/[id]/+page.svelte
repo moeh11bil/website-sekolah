@@ -89,6 +89,10 @@
             <img
               src={getImageUrl(post.image_url)}
               alt={post.title}
+              width="1200"
+              height="768"
+              loading="lazy"
+              decoding="async"
               class="w-full h-64 md:h-96 object-cover"
             />
           </div>
@@ -109,24 +113,6 @@
         </div>
 
         <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-          <style>
-            .prose ul {
-              list-style-type: disc;
-              padding-left: 1.5rem;
-              margin-top: 0.5rem;
-              margin-bottom: 0.5rem;
-            }
-            .prose ol {
-              list-style-type: decimal;
-              padding-left: 1.5rem;
-              margin-top: 0.5rem;
-              margin-bottom: 0.5rem;
-            }
-            .prose li {
-              margin-top: 0.25rem;
-              margin-bottom: 0.25rem;
-            }
-          </style>
           {@html post.content}
         </div>
 
@@ -150,3 +136,22 @@
     {/if}
   </section>
 </div>
+
+<style>
+  :global(.prose ul) {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  :global(.prose ol) {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  :global(.prose li) {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+</style>

@@ -25,6 +25,7 @@
   let categories: Category[] = [];
   let currentStatus: 'draft' | 'pending_approval' | 'published' = 'draft';
   let currentImageUrl: string | null = null;
+  let originalImageUrl: string | null = null;
   let errorMessage: string | null = null;
   let successMessage: string | null = null;
   let loading = false;
@@ -33,6 +34,7 @@
 
   let selectedImage: File | null = null;
   let imagePreviewUrl: string | null = null;
+  let removeImage = false;
   let startNumber = 1;
 
   function setOrderedListStart() {
@@ -54,6 +56,7 @@
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       selectedImage = input.files[0];
+      removeImage = false;
       const reader = new FileReader();
       reader.onload = (e) => {
         imagePreviewUrl = e.target?.result as string;
@@ -63,6 +66,13 @@
       selectedImage = null;
       imagePreviewUrl = null;
     }
+  }
+
+  function handleRemoveImage() {
+    removeImage = true;
+    selectedImage = null;
+    imagePreviewUrl = null;
+    currentImageUrl = null;
   }
 
   function formatText(command: string, value: string = '') {
@@ -257,6 +267,7 @@
           selectedCategory = postData.category_id === null ? '' : Number(postData.category_id);
           currentStatus = postData.status;
           currentImageUrl = postData.image_url;
+          originalImageUrl = postData.image_url;
 
           // Initialize content in the contenteditable div after the DOM is ready
           setTimeout(initializeContentDiv, 0);
@@ -294,6 +305,8 @@
       formData.append('category_id', selectedCategory.toString());
       if (selectedImage) {
         formData.append('image', selectedImage);
+      } else if (removeImage) {
+        formData.append('remove_image', 'true');
       }
 
       // Handle status change based on role
@@ -615,18 +628,46 @@
             </div>
 
             <!-- Image preview -->
-            {#if currentImageUrl || imagePreviewUrl}
+            {#if removeImage}
+              <div class="sm:w-48 flex-shrink-0">
+                <div class="rounded-xl overflow-hidden border border-red-200 shadow-md bg-red-50">
+                  <div class="h-48 flex items-center justify-center">
+                    <div class="text-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-red-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <p class="text-xs text-red-500 font-medium">Gambar akan dihapus</p>
+                    </div>
+                  </div>
+                  <div class="p-3 bg-red-50 border-t border-red-200">
+                    <button type="button" on:click={() => { removeImage = false; currentImageUrl = originalImageUrl; }} class="text-xs text-red-600 hover:text-red-800 font-medium w-full text-center">
+                      Batalkan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {:else if currentImageUrl || imagePreviewUrl}
               <div class="sm:w-48 flex-shrink-0">
                 <div class="rounded-xl overflow-hidden border border-primary-200 shadow-md bg-white">
                   <img
                     src={imagePreviewUrl || getImageUrl(currentImageUrl)}
                     alt={imagePreviewUrl ? 'Preview Image' : 'Current Post Image'}
+                    loading="lazy"
+                    decoding="async"
                     class="w-full h-48 object-cover"
                   />
-                  <div class="p-3 bg-gray-50">
-                    <p class="text-xs text-gray-500 truncate">
+                  <div class="p-3 bg-gray-50 flex items-center justify-between">
+                    <p class="text-xs text-gray-500 truncate mr-2">
                       {imagePreviewUrl ? selectedImage?.name : 'Current Image'}
                     </p>
+                    {#if !imagePreviewUrl}
+                      <button type="button" on:click={handleRemoveImage} class="text-xs text-red-600 hover:text-red-800 font-medium whitespace-nowrap flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Hapus
+                      </button>
+                    {/if}
                   </div>
                 </div>
               </div>

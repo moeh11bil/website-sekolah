@@ -14,8 +14,15 @@
     status: 'active' | 'inactive';
   }
 
+  interface QuickLink {
+    id: number;
+    title: string;
+    url: string;
+    icon?: string;
+  }
+
   let headerData: HeaderConfig | null = null;
-  let quickLinks: any[] = [];
+  let quickLinks: QuickLink[] = [];
   let loading = true;
   let error: string | null = null;
 
@@ -78,7 +85,12 @@
 {:else}
   <section class="relative bg-gradient-to-br from-primary-600 to-primary-800 text-white py-20 md:py-32 overflow-hidden rounded-xl shadow-2xl mb-12">
     {#if headerData?.image_url}
-      <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20" style="background-image: url('{getImageUrl(headerData.image_url)}')"></div>
+      <img
+        src={getImageUrl(headerData.image_url)}
+        alt=""
+        fetchpriority="high"
+        class="absolute inset-0 w-full h-full object-cover opacity-20"
+      />
     {/if}
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.05\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
     <div class="container mx-auto text-center relative z-10 px-4">

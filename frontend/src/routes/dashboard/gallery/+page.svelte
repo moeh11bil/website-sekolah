@@ -343,6 +343,8 @@
                 <img
                   src={imagePreviewUrl}
                   alt="Preview"
+                  loading="lazy"
+                  decoding="async"
                   class="w-full h-32 object-cover"
                 />
               </div>
@@ -396,6 +398,8 @@
                     <img
                       src={getImageUrl(item.image_url)}
                       alt={item.title}
+                      loading="lazy"
+                      decoding="async"
                       class="w-full h-full object-cover"
                     />
                   </div>

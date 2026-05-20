@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores';
   import Sidebar from './Sidebar.svelte';
+  import Toast from '$lib/components/Toast.svelte';
 
   $: currentRole = $auth.user?.role;
 
@@ -10,6 +11,8 @@
     goto('/login');
   }
 </script>
+
+<Toast />
 
 <div class="container mx-auto p-4 md:p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-xl mt-6 mb-8">
   {#if currentRole}

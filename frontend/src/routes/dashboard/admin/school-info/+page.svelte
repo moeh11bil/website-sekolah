@@ -205,6 +205,10 @@
                   <img
                     src={logoPreview || getImageUrl(schoolInfo.logo_url)}
                     alt="Current Logo"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
                     class="w-16 h-16 object-contain border border-gray-300 rounded-lg mr-4"
                   />
                   <div class="text-gray-600">
