@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+console.log('=== ADMIN INDEX.JS LOADED ===');
+
 const headerRoutes = require('./header');
 const aboutRoutes = require('./about');
 const galleryRoutes = require('./gallery');
