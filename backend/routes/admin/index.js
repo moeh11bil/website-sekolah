@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-console.log('=== ADMIN INDEX.JS LOADED ===');
-
 const headerRoutes = require('./header');
 const aboutRoutes = require('./about');
 const galleryRoutes = require('./gallery');
@@ -16,6 +14,39 @@ router.use('/gallery', galleryRoutes);
 router.use('/school-info', schoolInfoRoutes);
 router.use('/theme', themeRoutes);
 router.use('/staff-testimonials', staffTestimonialsRoutes);
+
+router.get('/public/gallery', async (req, res) => {
+  const { pool } = require('../../config/db');
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const offset = (page - 1) * limit;
+
+    const [countResult] = await pool.execute(
+      'SELECT COUNT(*) as total FROM gallery WHERE status = "active"'
+    );
+    const total = countResult[0].total;
+
+    const [items] = await pool.execute(
+      'SELECT id, title, description, image_url, category, created_at FROM gallery WHERE status = "active" ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+
+    res.json({
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total
+      }
+    });
+  } catch (error) {
+    console.error('Get public gallery error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 router.get('/public/header', async (req, res) => {
   const { pool } = require('../../config/db');
@@ -45,41 +76,6 @@ router.get('/public/about', async (req, res) => {
     res.json(rows[0] || { sejarah: '', visi: '', misi: '', fasilitas: '', kontak: '', image_url: null, status: 'active' });
   } catch (error) {
     console.error('Get public about error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-router.get('/public/gallery', async (req, res) => {
-  console.log('=== PUBLIC GALLERY HANDLER CALLED ===');
-  const { pool } = require('../../config/db');
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 6;
-    const offset = (page - 1) * limit;
-
-    const [countResult] = await pool.execute(
-      'SELECT COUNT(*) as total FROM gallery WHERE status = "active"'
-    );
-    const total = countResult[0].total;
-
-    const [items] = await pool.execute(
-      'SELECT id, title, description, image_url, category, created_at FROM gallery WHERE status = "active" ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [limit, offset]
-    );
-
-    console.log('Gallery items found:', items.length, 'total:', total);
-    res.json({
-      items,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: page * limit < total
-      }
-    });
-  } catch (error) {
-    console.error('Get public gallery error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
