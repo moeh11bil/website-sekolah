@@ -7,7 +7,18 @@ const util = require('util');
 const crypto = require('crypto');
 
 const execAsync = util.promisify(exec);
-const ROOT_DIR = process.env.PROJECT_DIR || path.join(__dirname, '../..');
+const detectProjectDir = () => {
+  if (process.env.PROJECT_DIR) return process.env.PROJECT_DIR;
+  const candidates = [
+    path.join(__dirname, '../..'),
+    '/www/wwwroot/website-sekolah',
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, '.git'))) return dir;
+  }
+  return candidates[0];
+};
+const ROOT_DIR = detectProjectDir();
 const BACKEND_DIR = process.env.BACKEND_DIR || path.join(__dirname, '..');
 const FRONTEND_DIR = process.env.FRONTEND_DIR || path.join(ROOT_DIR, 'frontend');
 const SCRIPT_PATH = path.join(__dirname, '..', 'scripts', 'update.sh');
