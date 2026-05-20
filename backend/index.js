@@ -117,9 +117,59 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/posts', postRoutes);
+
+// Public gallery route (diluar admin router untuk hindari Express 5 subrouter bug)
+app.get('/api/admin/public/gallery', async (req, res) => {
+  const pool = (require('./config/db')).pool;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const offset = (page - 1) * limit;
+    const [countResult] = await pool.execute(
+      'SELECT COUNT(*) as total FROM gallery WHERE status = "active"'
+    );
+    const total = countResult[0].total;
+    const [items] = await pool.execute(
+      'SELECT id, title, description, image_url, category, created_at FROM gallery WHERE status = "active" ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+    res.json({
+      items,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit), hasMore: page * limit < total }
+    });
+  } catch (error) {
+    console.error('Get public gallery error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
 app.use('/api/update', updateRoutes);
+
+app.get('/api/health', (req, res) => {
+  const pool = (require('./config/db')).pool;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const offset = (page - 1) * limit;
+    const [countResult] = await pool.execute(
+      'SELECT COUNT(*) as total FROM gallery WHERE status = "active"'
+    );
+    const total = countResult[0].total;
+    const [items] = await pool.execute(
+      'SELECT id, title, description, image_url, category, created_at FROM gallery WHERE status = "active" ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+    res.json({
+      items,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit), hasMore: page * limit < total }
+    });
+  } catch (error) {
+    console.error('Get public gallery error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ 
