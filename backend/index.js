@@ -145,18 +145,17 @@ app.get('/api/admin/public/gallery', async (req, res) => {
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
-const { exec } = require('child_process');
-const util = require('util');
-const execAsync2 = util.promisify(exec);
-
-app.get('/api/git-test', async (req, res) => {
+console.log('INDEX: registering routes...');
+app.get('/api/git-test', (req, res) => {
+  console.log('INDEX: /api/git-test called!');
+  const rootDir = process.env.PROJECT_DIR || '/www/wwwroot/website-sekolah';
+  const { execSync } = require('child_process');
   try {
-    const rootDir = process.env.PROJECT_DIR || '/www/wwwroot/website-sekolah';
-    const result = await execAsync2('git rev-parse --short HEAD 2>&1', { cwd: rootDir, timeout: 30000 });
-    const result2 = await execAsync2('git rev-parse --abbrev-ref HEAD 2>&1', { cwd: rootDir, timeout: 30000 });
-    res.json({ success: true, root_dir: rootDir, commit: result.stdout.trim(), branch: result2.stdout.trim() });
+    const commit = execSync('git rev-parse --short HEAD', { cwd: rootDir }).toString().trim();
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: rootDir }).toString().trim();
+    res.json({ success: true, root_dir: rootDir, commit, branch });
   } catch (e) {
-    res.json({ success: false, root_dir: process.env.PROJECT_DIR || '/www/wwwroot/website-sekolah', git_error: e.message, stack: e.stack, cmd: 'git rev-parse --short HEAD', cwd: process.env.PROJECT_DIR || '/www/wwwroot/website-sekolah' });
+    res.json({ success: false, root_dir: rootDir, error: e.message });
   }
 });
 
