@@ -1,10 +1,10 @@
 import { w as writable } from "./index2.js";
 const createAuthStore = () => {
-  const storedToken = null;
+  let parsedUser = null;
   const initial = {
-    user: null,
-    token: storedToken,
-    isAuthenticated: !!storedToken
+    user: parsedUser,
+    token: null,
+    isAuthenticated: !!parsedUser
   };
   const { subscribe, set, update } = writable(initial);
   return {

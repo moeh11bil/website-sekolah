@@ -10,7 +10,7 @@ return {
 	assets: new Set(["favicon.svg"]),
 	mimeTypes: {".svg":"image/svg+xml"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.8a1d6ceb.js","app":"_app/immutable/entry/app.0bf01fd6.js","imports":["_app/immutable/entry/start.8a1d6ceb.js","_app/immutable/chunks/scheduler.65d1733f.js","_app/immutable/chunks/singletons.e6a963b8.js","_app/immutable/chunks/index.c1be7129.js","_app/immutable/entry/app.0bf01fd6.js","_app/immutable/chunks/scheduler.65d1733f.js","_app/immutable/chunks/index.3d24a1b0.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.80cacbaa.js","app":"_app/immutable/entry/app.c17a9dfe.js","imports":["_app/immutable/entry/start.80cacbaa.js","_app/immutable/chunks/scheduler.cbb07bcc.js","_app/immutable/chunks/singletons.8abfd548.js","_app/immutable/chunks/index.bbafbdb2.js","_app/immutable/entry/app.c17a9dfe.js","_app/immutable/chunks/scheduler.cbb07bcc.js","_app/immutable/chunks/index.a71001cf.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
@@ -42,7 +42,8 @@ return {
 			__memo(() => import('./nodes/27.js')),
 			__memo(() => import('./nodes/28.js')),
 			__memo(() => import('./nodes/29.js')),
-			__memo(() => import('./nodes/30.js'))
+			__memo(() => import('./nodes/30.js')),
+			__memo(() => import('./nodes/31.js'))
 		],
 		routes: [
 			{
@@ -151,94 +152,101 @@ return {
 				endpoint: null
 			},
 			{
+				id: "/dashboard/admin/update",
+				pattern: /^\/dashboard\/admin\/update\/?$/,
+				params: [],
+				page: { layouts: [0,2,], errors: [1,,], leaf: 18 },
+				endpoint: null
+			},
+			{
 				id: "/dashboard/admin/users",
 				pattern: /^\/dashboard\/admin\/users\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 18 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 19 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/admin/users/create",
 				pattern: /^\/dashboard\/admin\/users\/create\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 19 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 20 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/admin/users/edit/[id]",
 				pattern: /^\/dashboard\/admin\/users\/edit\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 20 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 21 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/gallery",
 				pattern: /^\/dashboard\/gallery\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 21 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 22 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/posts/create",
 				pattern: /^\/dashboard\/posts\/create\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 22 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 23 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/posts/edit/[id]",
 				pattern: /^\/dashboard\/posts\/edit\/([^/]+?)\/?$/,
 				params: [{"name":"id","optional":false,"rest":false,"chained":false}],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 23 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 24 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/posts/my-posts",
 				pattern: /^\/dashboard\/posts\/my-posts\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 24 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 25 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/posts/pending",
 				pattern: /^\/dashboard\/posts\/pending\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 25 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 26 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/student",
 				pattern: /^\/dashboard\/student\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 26 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 27 },
 				endpoint: null
 			},
 			{
 				id: "/dashboard/teacher",
 				pattern: /^\/dashboard\/teacher\/?$/,
 				params: [],
-				page: { layouts: [0,2,], errors: [1,,], leaf: 27 },
+				page: { layouts: [0,2,], errors: [1,,], leaf: 28 },
 				endpoint: null
 			},
 			{
 				id: "/galeri",
 				pattern: /^\/galeri\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 28 },
+				page: { layouts: [0,], errors: [1,], leaf: 29 },
 				endpoint: null
 			},
 			{
 				id: "/login",
 				pattern: /^\/login\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 29 },
+				page: { layouts: [0,], errors: [1,], leaf: 30 },
 				endpoint: null
 			},
 			{
 				id: "/tentang-kami",
 				pattern: /^\/tentang-kami\/?$/,
 				params: [],
-				page: { layouts: [0,], errors: [1,], leaf: 30 },
+				page: { layouts: [0,], errors: [1,], leaf: 31 },
 				endpoint: null
 			}
 		],

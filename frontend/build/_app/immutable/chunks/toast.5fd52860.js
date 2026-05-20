@@ -1,0 +1,1 @@
+import{w as c}from"./index.bbafbdb2.js";const o=c([]);let f=0;function e(s,i="info",t=5e3){const n=++f;return o.update(a=>[...a,{id:n,message:s,type:i,duration:t}]),t>0&&setTimeout(()=>r(n),t),n}function r(s){o.update(i=>i.filter(t=>t.id!==s))}const u={success:s=>e(s,"success"),error:s=>e(s,"error"),warning:s=>e(s,"warning"),info:s=>e(s,"info"),dismiss:r};export{u as a,o as t};

@@ -35,6 +35,7 @@ declare module '$env/static/private' {
 	export const WINDOWID: string;
 	export const npm_config_userconfig: string;
 	export const COLORTERM: string;
+	export const OPENCODE_PROCESS_ROLE: string;
 	export const XDG_CONFIG_DIRS: string;
 	export const npm_config_cache: string;
 	export const XDG_SESSION_PATH: string;
@@ -45,6 +46,7 @@ declare module '$env/static/private' {
 	export const LC_ADDRESS: string;
 	export const LC_NAME: string;
 	export const SHELL_SESSION_ID: string;
+	export const AGENT: string;
 	export const MEMORY_PRESSURE_WRITE: string;
 	export const COLOR: string;
 	export const npm_config_local_prefix: string;
@@ -64,7 +66,9 @@ declare module '$env/static/private' {
 	export const XAUTHORITY: string;
 	export const MOTD_SHOWN: string;
 	export const GTK2_RC_FILES: string;
+	export const OPENCODE_PID: string;
 	export const HOME: string;
+	export const OPENCODE: string;
 	export const LANG: string;
 	export const LC_PAPER: string;
 	export const _JAVA_AWT_WM_NONREPARENTING: string;
@@ -78,6 +82,7 @@ declare module '$env/static/private' {
 	export const VIRTUAL_ENV_DISABLE_PROMPT: string;
 	export const MANROFFOPT: string;
 	export const XDG_SEAT_PATH: string;
+	export const OPENCODE_RUN_ID: string;
 	export const INVOCATION_ID: string;
 	export const KONSOLE_VERSION: string;
 	export const MANAGERPID: string;
@@ -166,6 +171,7 @@ declare module '$env/dynamic/private' {
 		WINDOWID: string;
 		npm_config_userconfig: string;
 		COLORTERM: string;
+		OPENCODE_PROCESS_ROLE: string;
 		XDG_CONFIG_DIRS: string;
 		npm_config_cache: string;
 		XDG_SESSION_PATH: string;
@@ -176,6 +182,7 @@ declare module '$env/dynamic/private' {
 		LC_ADDRESS: string;
 		LC_NAME: string;
 		SHELL_SESSION_ID: string;
+		AGENT: string;
 		MEMORY_PRESSURE_WRITE: string;
 		COLOR: string;
 		npm_config_local_prefix: string;
@@ -195,7 +202,9 @@ declare module '$env/dynamic/private' {
 		XAUTHORITY: string;
 		MOTD_SHOWN: string;
 		GTK2_RC_FILES: string;
+		OPENCODE_PID: string;
 		HOME: string;
+		OPENCODE: string;
 		LANG: string;
 		LC_PAPER: string;
 		_JAVA_AWT_WM_NONREPARENTING: string;
@@ -209,6 +218,7 @@ declare module '$env/dynamic/private' {
 		VIRTUAL_ENV_DISABLE_PROMPT: string;
 		MANROFFOPT: string;
 		XDG_SEAT_PATH: string;
+		OPENCODE_RUN_ID: string;
 		INVOCATION_ID: string;
 		KONSOLE_VERSION: string;
 		MANAGERPID: string;

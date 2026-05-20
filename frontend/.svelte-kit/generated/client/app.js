@@ -31,7 +31,8 @@ export const nodes = [
 	() => import('./nodes/27'),
 	() => import('./nodes/28'),
 	() => import('./nodes/29'),
-	() => import('./nodes/30')
+	() => import('./nodes/30'),
+	() => import('./nodes/31')
 ];
 
 export const server_loads = [];
@@ -52,19 +53,20 @@ export const dictionary = {
 		"/dashboard/admin/school-info": [15,[2]],
 		"/dashboard/admin/staff-testimonials": [16,[2]],
 		"/dashboard/admin/theme": [17,[2]],
-		"/dashboard/admin/users": [18,[2]],
-		"/dashboard/admin/users/create": [19,[2]],
-		"/dashboard/admin/users/edit/[id]": [20,[2]],
-		"/dashboard/gallery": [21,[2]],
-		"/dashboard/posts/create": [22,[2]],
-		"/dashboard/posts/edit/[id]": [23,[2]],
-		"/dashboard/posts/my-posts": [24,[2]],
-		"/dashboard/posts/pending": [25,[2]],
-		"/dashboard/student": [26,[2]],
-		"/dashboard/teacher": [27,[2]],
-		"/galeri": [28],
-		"/login": [29],
-		"/tentang-kami": [30]
+		"/dashboard/admin/update": [18,[2]],
+		"/dashboard/admin/users": [19,[2]],
+		"/dashboard/admin/users/create": [20,[2]],
+		"/dashboard/admin/users/edit/[id]": [21,[2]],
+		"/dashboard/gallery": [22,[2]],
+		"/dashboard/posts/create": [23,[2]],
+		"/dashboard/posts/edit/[id]": [24,[2]],
+		"/dashboard/posts/my-posts": [25,[2]],
+		"/dashboard/posts/pending": [26,[2]],
+		"/dashboard/student": [27,[2]],
+		"/dashboard/teacher": [28,[2]],
+		"/galeri": [29],
+		"/login": [30],
+		"/tentang-kami": [31]
 	};
 
 export const hooks = {

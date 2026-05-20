@@ -15,6 +15,7 @@
 	"/dashboard/admin/school-info": [],
 	"/dashboard/admin/staff-testimonials": [],
 	"/dashboard/admin/theme": [],
+	"/dashboard/admin/update": [],
 	"/dashboard/admin/users": [],
 	"/dashboard/admin/users/create": [],
 	"/dashboard/admin/users/edit/[id]": [],
