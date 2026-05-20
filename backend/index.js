@@ -1,3 +1,4 @@
+console.log("--- SERVER STARTING: Verifying code deployment ---");
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -14,6 +15,7 @@ const categoryRoutes = require('./routes/categories');
 const postRoutes = require('./routes/posts');
 const adminRoutes = require('./routes/admin');
 const quickLinksRoutes = require('./routes/quickLinks');
+const updateRoutes = require("./routes/update");
 const { listRoutes } = require('./utils/route-debug');
 
 // ... (other requires)
