@@ -48,6 +48,7 @@ router.get('/public/about', async (req, res) => {
 });
 
 router.get('/public/gallery', async (req, res) => {
+  console.log('=== PUBLIC GALLERY HANDLER CALLED ===');
   const { pool } = require('../../config/db');
   try {
     const page = parseInt(req.query.page) || 1;
@@ -64,6 +65,7 @@ router.get('/public/gallery', async (req, res) => {
       [limit, offset]
     );
 
+    console.log('Gallery items found:', items.length, 'total:', total);
     res.json({
       items,
       pagination: {
