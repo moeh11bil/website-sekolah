@@ -66,16 +66,6 @@ function logFile(id) {
   return path.join(LOG_DIR, `update-${id}.log`);
 }
 
-router.get('/git-test', async (req, res) => {
-  try {
-    const result = await execGit(ROOT_DIR, 'rev-parse --short HEAD 2>&1');
-    const result2 = await execGit(ROOT_DIR, 'rev-parse --abbrev-ref HEAD 2>&1');
-    res.json({ success: true, root_dir: ROOT_DIR, commit: result, branch: result2 });
-  } catch (e) {
-    res.json({ success: false, root_dir: ROOT_DIR, git_error: e.message, stack: e.stack });
-  }
-});
-
 router.get('/info', protect, authorize(['admin']), async (req, res) => {
   try {
     let currentCommit = '-';
