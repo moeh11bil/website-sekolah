@@ -31,8 +31,6 @@ const DOMAIN = process.env.DOMAIN || 'localhost';
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
-  res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
 
@@ -40,7 +38,16 @@ app.use((req, res, next) => {
 app.use(helmet({
   crossOriginResourcePolicy: false,
   crossOriginEmbedderPolicy: false,
-  contentSecurityPolicy: false
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"]
+    }
+  }
 }));
 
 const corsOptions = {
@@ -69,7 +76,7 @@ const corsOptions = {
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 1000,
   message: { message: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -125,7 +132,7 @@ app.use('/api/posts', postRoutes);
 
 // Public gallery route (diluar admin router untuk hindari Express 5 subrouter bug)
 app.get('/api/admin/public/gallery', async (req, res) => {
-  const pool = (require('./config/db')).pool;
+  const { pool } = require('./config/db');
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
@@ -148,11 +155,86 @@ app.get('/api/admin/public/gallery', async (req, res) => {
   }
 });
 
+// Public routes (diluar admin router untuk hindari Express 5 subrouter bug)
+app.get('/api/admin/public/header', async (req, res) => {
+  const { pool } = require('./config/db');
+  try {
+    const [rows] = await pool.execute(
+      'SELECT title, subtitle, image_url, cta_link, status FROM page_config WHERE page_type = "header" AND status = "active" ORDER BY id DESC LIMIT 1'
+    );
+    res.json(rows[0] || {
+      title: 'Pendidikan Masa Depan, Mulai dari Sini.',
+      subtitle: 'Mencetak generasi unggul yang siap menghadapi tantangan global dengan pendekatan modern dan inovatif.',
+      image_url: null,
+      cta_link: '/register',
+      status: 'active'
+    });
+  } catch (error) {
+    console.error('Get public header error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/admin/public/about', async (req, res) => {
+  const { pool } = require('./config/db');
+  try {
+    const [rows] = await pool.execute(
+      'SELECT sejarah, visi, misi, fasilitas, kontak, image_url, status FROM page_config WHERE page_type = "about" AND status = "active" ORDER BY id DESC LIMIT 1'
+    );
+    res.json(rows[0] || { sejarah: '', visi: '', misi: '', fasilitas: '', kontak: '', image_url: null, status: 'active' });
+  } catch (error) {
+    console.error('Get public about error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/admin/public/school-info', async (req, res) => {
+  const { pool } = require('./config/db');
+  try {
+    const [rows] = await pool.execute(
+      'SELECT school_name, school_moto, logo_url FROM school_info ORDER BY id DESC LIMIT 1'
+    );
+    res.json(rows[0] || { school_name: 'Sekolah Modern', school_moto: 'Pendidikan Masa Depan, Mulai dari Sini.', logo_url: null });
+  } catch (error) {
+    console.error('Get public school info error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/admin/public/theme', async (req, res) => {
+  const { pool } = require('./config/db');
+  try {
+    const [rows] = await pool.execute(
+      'SELECT value FROM settings WHERE name = "site_theme" ORDER BY id DESC LIMIT 1'
+    );
+    res.json({ theme: rows[0]?.value || 'emerald' });
+  } catch (error) {
+    console.error('Get public theme error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.get('/api/admin/public/staff-testimonials', async (req, res) => {
+  const { pool } = require('./config/db');
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, name, position, quote, image_url FROM staff_testimonials WHERE status = "active" ORDER BY sort_order ASC, created_at ASC'
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error('Get public staff testimonials error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 app.use('/api/admin', adminRoutes);
 app.use('/api/quick-links', quickLinksRoutes);
 app.use('/api/update', updateRoutes);
 
 app.get('/api/routes', (req, res) => {
+  if (NODE_ENV === 'production') {
+    return res.status(404).json({ message: 'Not found' });
+  }
   res.json(listRoutes(app));
 });
 

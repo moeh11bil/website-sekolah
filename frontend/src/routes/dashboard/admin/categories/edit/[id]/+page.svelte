@@ -1,8 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { page } from '$app/stores';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   let categoryId: number;
   let originalName = ''; // Store original name for comparison
@@ -14,7 +16,7 @@
   let token: string | null = null;
 
   onMount(async () => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = get(auth).token;
     if (storedToken) {
       token = storedToken;
       categoryId = parseInt($page.params.id);

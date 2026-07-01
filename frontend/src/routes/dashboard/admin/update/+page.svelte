@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { get } from 'svelte/store';
   import { toast } from '$lib/toast';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface UpdateInfo {
     version: string;
@@ -70,7 +72,7 @@
   }
 
   function getToken() {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = get(auth).token;
     if (!storedToken) {
       toast.error('Silakan login terlebih dahulu');
       return null;

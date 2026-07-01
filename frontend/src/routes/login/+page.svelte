@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { onMount, getContext } from 'svelte';
+  import { onMount, onDestroy, getContext } from 'svelte';
+  import { get } from 'svelte/store';
   import { auth } from '$lib/stores';
   import { API_URL } from '$lib/config';
   import type { Readable } from 'svelte/store';
@@ -14,22 +15,27 @@
   let loading = false;
   let isCheckingAuth = true;
 
+  let unsubscribeAuth: (() => void) | null = null;
+
   onMount(() => {
     if (localStorage.getItem('logoutSuccess') === 'true') {
         successMessage = 'Anda telah berhasil logout.';
         localStorage.removeItem('logoutSuccess');
         setTimeout(() => { successMessage = null; }, 3000);
     }
-    auth.subscribe((state) => {
-      if (state.isAuthenticated && state.user?.role) {
-        goto(`/dashboard/${state.user.role}`);
-        return;
-      }
-      if (state.isAuthenticated && !state.user?.role) {
-        auth.logout();
-      }
-      isCheckingAuth = false;
-    });
+    const currentState = get(auth);
+    if (currentState.isAuthenticated && currentState.user?.role) {
+      goto(`/dashboard/${currentState.user.role}`);
+      return;
+    }
+    if (currentState.isAuthenticated && !currentState.user?.role) {
+      auth.logout();
+    }
+    isCheckingAuth = false;
+  });
+
+  onDestroy(() => {
+    if (unsubscribeAuth) unsubscribeAuth();
   });
 
   async function handleLogin() {
@@ -49,11 +55,9 @@
       const data = await response.json();
 
       if (response.ok) {
-        successMessage = 'Login berhasil! Mengalihkan...';
-        setTimeout(() => {
-            auth.login(data.user, data.token);
-            goto(`/dashboard/${data.user.role}`);
-        }, 1500);
+        loading = true;
+        auth.login(data.user, data.token);
+        goto(`/dashboard/${data.user.role}`);
       } else {
         errorMessage = data.message || 'Login failed. Please check your credentials.';
       }

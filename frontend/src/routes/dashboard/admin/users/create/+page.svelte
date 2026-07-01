@@ -1,9 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount, getContext } from 'svelte';
+  import { get } from 'svelte/store';
   import type { Writable } from 'svelte/store';
-  import type { User } from '../../../../+layout.svelte';
+  import type { User } from '$lib/types';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   const userStore = getContext<Writable<User | null>>('userStore');
 
@@ -17,7 +19,7 @@
   let token: string | null = null;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = get(auth).token;
     if (storedToken) {
       token = storedToken;
     } else {

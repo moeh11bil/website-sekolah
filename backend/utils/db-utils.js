@@ -1,5 +1,5 @@
 // db-utils.js - Database utility functions with error handling
-const { pool } = require('./config/db');
+const { pool } = require('../config/db');
 
 // Wrapper function to handle database queries with error handling
 async function dbQuery(query, params = []) {

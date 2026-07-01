@@ -2,7 +2,7 @@ export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Sekolah Modern';
 export const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
 export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '');
 
-export const IS_PRODUCTION = import.meta.env.PROD === true || import.meta.env.NODE_ENV === 'production';
+export const IS_PRODUCTION = import.meta.env.PROD || import.meta.env.NODE_ENV === 'production';
 
 export const API_ENDPOINTS = {
   auth: {

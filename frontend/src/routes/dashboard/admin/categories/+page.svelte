@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface Category {
     id: number;
@@ -17,7 +19,7 @@
   let categoryToDelete: number | null = null;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = get(auth).token;
     if (storedToken) {
       token = storedToken;
       fetchCategories();

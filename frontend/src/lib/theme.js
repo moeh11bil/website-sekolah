@@ -109,11 +109,11 @@ export function applyTheme(theme) {
 
 // Fungsi untuk mendapatkan tema dari localStorage
 export function getCurrentTheme() {
-  const savedTheme = localStorage.getItem('selectedTheme');
+  const savedTheme = localStorage.getItem('theme');
   return savedTheme || 'emerald'; // Tema default
 }
 
 // Fungsi untuk menyimpan tema ke localStorage
 export function saveCurrentTheme(themeName) {
-  localStorage.setItem('selectedTheme', themeName);
+  localStorage.setItem('theme', themeName);
 }

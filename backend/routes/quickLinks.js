@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     res.json(links);
   } catch (error) {
     console.error('Get quick links error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -33,7 +33,7 @@ router.post('/', protect, authorize(['admin']), async (req, res) => {
 });
 
 // Admin: Update quick link
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, authorize(['admin']), async (req, res) => {
   const { title, url, icon } = req.body;
   const { id } = req.params;
   

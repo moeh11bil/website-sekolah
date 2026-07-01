@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { browser } from '$app/environment';
   import { themes, applyTheme } from '$lib/theme';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   let selectedTheme = 'emerald';
   let themeNames = Object.keys(themes);
@@ -17,17 +19,13 @@
       isClient = true;
 
       try {
-        // Check if user is admin by looking at the stored user info
-        const storedUserStr = localStorage.getItem('user');
-        if (!storedUserStr) {
-          // No user data in localStorage, redirect to login
+        const currentUser = get(auth).user;
+        if (!currentUser) {
           window.location.href = '/login';
           return;
         }
 
-        const storedUser = JSON.parse(storedUserStr);
-        if (!storedUser || storedUser.role !== 'admin') {
-          // User is not admin, redirect to home
+        if (currentUser.role !== 'admin') {
           window.location.href = '/';
           return;
         }
@@ -38,7 +36,7 @@
         try {
           const response = await fetch(`${API_URL}/api/admin/theme`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+              'Authorization': `Bearer ${get(auth).token || ''}`
             }
           });
 
@@ -96,7 +94,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${get(auth).token || ''}`
         },
         body: JSON.stringify({ theme: themeName })
       });

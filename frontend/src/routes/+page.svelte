@@ -95,10 +95,10 @@
     <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.05\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
     <div class="container mx-auto text-center relative z-10 px-4">
       <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight font-serif">
-        {@html getTitle()}
+        {getTitle()}
       </h1>
       <p class="text-xl md:text-2xl mb-10 max-w-3xl mx-auto opacity-90">
-        {@html getSubtitle()}
+        {getSubtitle()}
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
         <a href="/tentang-kami" class="bg-white text-primary-700 hover:bg-primary-50 font-bold py-4 px-8 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl">

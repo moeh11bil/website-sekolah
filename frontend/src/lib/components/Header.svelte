@@ -4,7 +4,7 @@
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
   import type { Writable } from 'svelte/store';
-  import type { User, SchoolInfo } from '../../routes/+layout.svelte';
+  import type { User, SchoolInfo } from '$lib/types';
   import { API_URL, getImageUrl } from '$lib/config';
 
   const user = getContext<Writable<User | null>>('userStore');
@@ -38,11 +38,6 @@
   });
 
   $: if (browser && schoolInfoStore && !schoolData) {
-    fetchSchoolInfo();
-  }
-
-  $: if (browser && $page.url && $page.url.pathname !== currentPath) {
-    currentPath = $page.url.pathname;
     fetchSchoolInfo();
   }
 

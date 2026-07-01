@@ -6,6 +6,7 @@
   import type { Writable } from 'svelte/store';
   import type { User } from '$lib/types';
   import { API_URL, getImageUrl } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface GalleryItem {
     id: number;
@@ -30,7 +31,7 @@
     try {
       const response = await fetch(`${API_URL}/api/admin/gallery`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          'Authorization': `Bearer ${get(auth).token || ''}`
         }
       });
       
@@ -58,7 +59,7 @@
       const response = await fetch(`${API_URL}/api/admin/gallery/${id}/approve`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Authorization': `Bearer ${get(auth).token || ''}`,
           'Content-Type': 'application/json'
         }
       });
@@ -87,7 +88,7 @@
       const response = await fetch(`${API_URL}/api/admin/gallery/${id}/reject`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Authorization': `Bearer ${get(auth).token || ''}`,
           'Content-Type': 'application/json'
         }
       });

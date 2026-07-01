@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const limitNum = parseInt(limit) || 9;
     const offset = (pageNum - 1) * limitNum;
 
-    let countQuery = 'SELECT COUNT(*) as total FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = "published"';
+    let countQuery = 'SELECT COUNT(*) as total FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = \'published\'';
     let countParams = [];
 
     if (search && typeof search === 'string') {
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     const totalPosts = countResult[0].total;
     const totalPages = Math.ceil(totalPosts / limitNum);
 
-    let query = `SELECT p.id, p.title, LEFT(p.content, 200) AS content_snippet, p.status, p.created_at, p.published_at, u.full_name AS author, c.name AS category_name, p.image_url 
+    let query = `SELECT p.id, p.title, LEFT(REGEXP_REPLACE(p.content, '<[^>]*>', ''), 200) AS content_snippet, p.status, p.created_at, p.published_at, u.full_name AS author, c.name AS category_name, p.image_url 
                  FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'published'`;
     let params = [];
 
@@ -85,7 +85,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   try {
     let [posts] = await pool.execute(
       'SELECT p.id, p.title, p.content, p.status, p.created_at, p.published_at, u.full_name AS author, p.category_id, c.name AS category_name, p.image_url ' +
-      'FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? AND p.status = "published"',
+      'FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? AND p.status = \'published\'',
       [id]
     );
 
@@ -113,6 +113,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
     console.error('Get single post error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+router.post('/upload-image', protect, imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
+  if (!req.imageUrl) {
+    return res.status(400).json({ message: 'No image uploaded' });
+  }
+  res.json({ url: req.imageUrl });
 });
 
 router.post('/', protect, authorize(['teacher', 'student', 'admin']), imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
@@ -151,7 +158,7 @@ router.post('/', protect, authorize(['teacher', 'student', 'admin']), imageUploa
   }
 });
 
-router.put('/:id', protect, imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
+router.put('/:id', protect, authorize(['teacher', 'student', 'admin']), imageUpload({ subDir: 'posts', width: 1200 }), async (req, res) => {
   const { title, content, category_id, status, remove_image } = req.body;
   const { id: userId, role } = req.user;
   const { id } = req.params;

@@ -49,25 +49,25 @@ router.post('/', protect, authorize(['admin']), imageUpload({ subDir: 'pages', w
       if (imageUrl) {
         deleteOldImage(existing[0].image_url);
         await pool.execute(
-          'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = "active", updated_at = NOW() WHERE id = ?',
-          [sejarah, visi, misi, fasilitas, kontak, imageUrl, existing[0].id]
+          'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
+          [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active', existing[0].id]
         );
       } else {
         await pool.execute(
-          'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = "active", updated_at = NOW() WHERE id = ?',
-          [sejarah, visi, misi, fasilitas, kontak, existing[0].id]
+          'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
+          [sejarah, visi, misi, fasilitas, kontak, status || 'active', existing[0].id]
         );
       }
     } else {
       if (imageUrl) {
         await pool.execute(
-          'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, image_url, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, "Tentang Kami", "about", "active", NOW(), NOW())',
-          [sejarah, visi, misi, fasilitas, kontak, imageUrl]
+          'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, image_url, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, "Tentang Kami", "about", ?, NOW(), NOW())',
+          [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active']
         );
       } else {
         await pool.execute(
-          'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, "Tentang Kami", "about", "active", NOW(), NOW())',
-          [sejarah, visi, misi, fasilitas, kontak]
+          'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, "Tentang Kami", "about", ?, NOW(), NOW())',
+          [sejarah, visi, misi, fasilitas, kontak, status || 'active']
         );
       }
     }
@@ -98,13 +98,13 @@ router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'pages',
     if (imageUrl) {
       deleteOldImage(existing[0].image_url);
       await pool.execute(
-        'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = "active", updated_at = NOW() WHERE id = ?',
-        [sejarah, visi, misi, fasilitas, kontak, imageUrl, id]
+        'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
+        [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active', id]
       );
     } else {
       await pool.execute(
-        'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = "active", updated_at = NOW() WHERE id = ?',
-        [sejarah, visi, misi, fasilitas, kontak, id]
+        'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
+        [sejarah, visi, misi, fasilitas, kontak, status || 'active', id]
       );
     }
     res.json({ message: 'About configuration updated successfully' });

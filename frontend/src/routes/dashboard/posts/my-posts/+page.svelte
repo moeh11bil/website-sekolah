@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, getContext } from 'svelte';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
   import type { Writable } from 'svelte/store';
-  import type { User as UserType } from '../../../+layout.svelte';
+  import type { User as UserType } from '$lib/types';
   import { API_URL } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   const user = getContext<Writable<UserType | null>>('userStore');
 
@@ -22,12 +24,12 @@
   let currentUserRole: string | null = null;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = get(auth).token;
+    const currentUser = get(auth).user;
 
-    if (storedToken && storedUser) {
+    if (storedToken && currentUser) {
       token = storedToken;
-      currentUserRole = JSON.parse(storedUser).role;
+      currentUserRole = currentUser.role;
       fetchMyPosts();
     } else {
       goto('/login');

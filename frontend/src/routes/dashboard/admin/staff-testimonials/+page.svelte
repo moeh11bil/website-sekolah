@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { API_URL, getImageUrl } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface Staff {
     id: number;
@@ -49,7 +51,7 @@
   let staffToDelete: number | null = null;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = get(auth).token;
     if (storedToken) {
       token = storedToken;
       fetchStaff();

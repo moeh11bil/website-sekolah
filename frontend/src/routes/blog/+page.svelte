@@ -88,6 +88,12 @@
   }
 
   // Function to generate page numbers with ellipsis for long pagination
+  function stripHtml(html: string): string {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent || div.innerText || '').trim();
+  }
+
   function generatePageNumbers(currentPage: number, totalPages: number): (number | string)[] {
     const delta = 2; // Number of pages to show around current page
     const paginationNumbers: (number | string)[] = [];
@@ -127,6 +133,9 @@
 
   onMount(() => {
     loadPosts();
+    return () => {
+      if (searchTimeout) window.clearTimeout(searchTimeout);
+    };
   });
 </script>
 
@@ -215,7 +224,7 @@
               </div>
               <h2 class="text-xl font-bold text-primary-800 mb-3 line-clamp-2">{post.title}</h2>
               <div class="text-gray-600 mb-4 line-clamp-3 prose prose-sm max-w-none">
-                {@html post.content_snippet + '...'}
+                {stripHtml(post.content_snippet)}...
               </div>
               <div class="flex items-center pt-4 border-t border-primary-100">
                 <div class="bg-primary-200 rounded-full w-8 h-8 flex items-center justify-center text-primary-700 font-bold mr-3">

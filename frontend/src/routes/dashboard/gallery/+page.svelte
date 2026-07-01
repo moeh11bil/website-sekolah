@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { API_URL, getImageUrl } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface GalleryItem {
     id: number;
@@ -29,25 +31,24 @@
   let deletingItem: GalleryItem | null = null; // Menyimpan item yang akan dihapus
 
   onMount(async () => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = get(auth).token;
+    const currentUser = get(auth).user;
 
-    if (!storedToken || !storedUser) {
+    if (!storedToken || !currentUser) {
       goto('/login');
       return;
     }
 
-    const user = JSON.parse(storedUser);
-    if (user.role !== 'teacher' && user.role !== 'student' && user.role !== 'admin') {
+    if (currentUser.role !== 'teacher' && currentUser.role !== 'student' && currentUser.role !== 'admin') {
       goto('/dashboard');
       return;
     }
 
     token = storedToken;
-    currentUserRole = user.role;
+    currentUserRole = currentUser.role;
 
     // Set status default berdasarkan peran pengguna
-    if (user.role === 'student') {
+    if (currentUser.role === 'student') {
       status = 'inactive';
     } else {
       status = 'active';

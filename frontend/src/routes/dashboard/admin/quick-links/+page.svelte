@@ -1,6 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, getContext } from 'svelte';
+  import { goto } from '$app/navigation';
   import { API_URL } from '$lib/config';
+  import type { Readable } from 'svelte/store';
+  import { auth } from '$lib/stores';
+  import { get } from 'svelte/store';
+
+  const siteName = getContext<Readable<string>>('siteNameStore');
 
   interface QuickLink {
     id: number;
@@ -44,7 +50,7 @@
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${get(auth).token}`
         },
         body: JSON.stringify({ title, url })
       });
@@ -97,7 +103,7 @@
       const res = await fetch(`${API_URL}/api/quick-links/${linkToDelete}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${get(auth).token}`
         }
       });
       if (res.ok) {
@@ -116,7 +122,14 @@
     linkToDelete = null;
   }
 
-  onMount(fetchLinks);
+  onMount(() => {
+    const user = get(auth).user;
+    if (!user || user.role !== 'admin') {
+      goto('/login');
+      return;
+    }
+    fetchLinks();
+  });
 </script>
 
 <div class="max-w-4xl mx-auto">

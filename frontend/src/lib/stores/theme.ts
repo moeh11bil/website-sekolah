@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { API_URL } from '$lib/config';
 
 interface ThemeState {
   theme: string;
@@ -29,7 +30,7 @@ const createThemeStore = () => {
     loadFromServer: async () => {
       update(state => ({ ...state, isLoading: true }));
       try {
-        const res = await fetch('/api/admin/public/theme');
+        const res = await fetch(`${API_URL}/api/admin/public/theme`);
         if (res.ok) {
           const data = await res.json();
           if (browser) {

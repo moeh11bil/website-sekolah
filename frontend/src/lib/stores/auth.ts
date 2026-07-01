@@ -1,12 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-
-export interface User {
-  id: number;
-  username: string;
-  full_name: string;
-  role: 'admin' | 'teacher' | 'student';
-}
+import type { User } from '$lib/types';
 
 interface AuthState {
   user: User | null;

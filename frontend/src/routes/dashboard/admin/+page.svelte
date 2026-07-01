@@ -1,9 +1,10 @@
 <script lang="ts">
   import { auth } from '$lib/stores';
+  import type { User } from '$lib/types';
 </script>
 
 <div class="bg-white rounded-xl shadow-lg p-6">
-  <h2 class="text-2xl font-bold text-primary-800 mb-4">Selamat Datang, {$auth.user?.full_name || 'Admin'}!</h2>
+  <h2 class="text-2xl font-bold text-primary-800 mb-4">Selamat Datang, {$auth.user?.full_name || $auth.user?.username || 'Admin'}!</h2>
   <p class="text-gray-700 mb-6">Ini adalah dashboard admin. Gunakan navigasi di samping untuk mengelola pengguna, kategori, dan postingan.</p>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
     <a href="/dashboard/admin/users" class="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-xl shadow-md border border-primary-200 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center">

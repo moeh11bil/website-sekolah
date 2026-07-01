@@ -86,7 +86,7 @@ router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'avatars
     console.error('Update staff testimonial error:', error);
     console.error('Error details:', error.message, error.stack);
     cleanupImage(req.imageFilePath);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

@@ -1,8 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { page } from '$app/stores';
   import { API_URL, getImageUrl } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface Post {
     id: number;
@@ -36,6 +38,8 @@
   let imagePreviewUrl: string | null = null;
   let removeImage = false;
   let startNumber = 1;
+  let contentImageInput: HTMLInputElement;
+  let contentImageUploading = false;
 
   function setOrderedListStart() {
     const selection = window.getSelection();
@@ -50,6 +54,66 @@
       list.setAttribute('start', startNumber.toString());
       handleContentChange();
     }
+  }
+
+  async function handleContentImageUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !token) return;
+
+    contentImageUploading = true;
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_URL}/api/posts/upload-image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Upload gagal');
+
+      const data = await response.json();
+      const imgUrl = `${API_URL}${data.url}`;
+
+      const contentDiv = document.getElementById('content');
+      if (contentDiv) {
+        contentDiv.focus();
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = file.name;
+        img.className = 'max-w-full h-auto rounded-lg my-2';
+        img.loading = 'lazy';
+
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.collapse(false);
+          range.insertNode(img);
+          range.setStartAfter(img);
+          range.setEndAfter(img);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          contentDiv.appendChild(img);
+        }
+
+        const br = document.createElement('br');
+        contentDiv.appendChild(br);
+        handleContentChange();
+      }
+    } catch (e: any) {
+      console.error('Image upload error:', e);
+      alert('Gagal upload gambar: ' + e.message);
+    } finally {
+      contentImageUploading = false;
+      if (contentImageInput) contentImageInput.value = '';
+    }
+  }
+
+  function insertContentImage() {
+    contentImageInput.click();
   }
 
   function handleImageChange(event: Event) {
@@ -200,11 +264,11 @@
   }
 
   onMount(async () => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
+    const storedToken = get(auth).token;
+    const currentUser = get(auth).user;
+    if (storedToken && currentUser) {
       token = storedToken;
-      currentUserRole = JSON.parse(storedUser).role;
+      currentUserRole = currentUser.role;
       postId = parseInt($page.params.id);
       if (isNaN(postId)) {
         errorMessage = 'Invalid Post ID.';
@@ -582,6 +646,32 @@
             >
               H
             </button>
+            <div class="border-l border-primary-200 h-6 my-auto"></div>
+            <button
+              type="button"
+              class="p-2 rounded hover:bg-primary-100 text-gray-700"
+              on:click={insertContentImage}
+              title="Sisipkan Gambar"
+              disabled={contentImageUploading}
+            >
+              {#if contentImageUploading}
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+              {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              {/if}
+            </button>
+            <input
+              type="file"
+              accept="image/*"
+              class="hidden"
+              bind:this={contentImageInput}
+              on:change={handleContentImageUpload}
+            />
           </div>
 
           <!-- Content editor -->

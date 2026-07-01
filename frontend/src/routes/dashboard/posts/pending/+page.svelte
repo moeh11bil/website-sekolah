@@ -4,6 +4,7 @@
   import { apiRequest, getAuthHeaders } from '$lib/api';
   import { auth } from '$lib/stores';
   import { API_URL } from '$lib/config';
+  import { get } from 'svelte/store';
 
   interface Post {
     id: number;
@@ -20,21 +21,19 @@
   let currentUserRole: string | null = null;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-
-    if (storedToken && storedUser) {
-      token = storedToken;
-      currentUserRole = JSON.parse(storedUser).role;
-      if (currentUserRole !== 'admin' && currentUserRole !== 'teacher') {
-        error = 'Anda tidak memiliki izin untuk mengakses halaman ini.';
-        loading = false;
-        return;
-      }
-      fetchPendingPosts();
-    } else {
+    const currentUser = get(auth);
+    if (!currentUser.isAuthenticated || !currentUser.user) {
       goto('/login');
+      return;
     }
+    currentUserRole = currentUser.user.role;
+    token = currentUser.token;
+    if (currentUserRole !== 'admin' && currentUserRole !== 'teacher') {
+      error = 'Anda tidak memiliki izin untuk mengakses halaman ini.';
+      loading = false;
+      return;
+    }
+    fetchPendingPosts();
   });
 
   async function fetchPendingPosts() {

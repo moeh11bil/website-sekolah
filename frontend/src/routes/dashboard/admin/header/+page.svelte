@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { API_URL, getImageUrl } from '$lib/config';
+  import { auth } from '$lib/stores';
 
   interface HeaderConfig {
     id: number;
@@ -26,16 +28,15 @@
   let imagePreviewUrl: string | null = null;
 
   onMount(async () => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = get(auth).token;
+    const currentUser = get(auth).user;
     
-    if (!storedToken || !storedUser) {
+    if (!storedToken || !currentUser) {
       goto('/login');
       return;
     }
     
-    const user = JSON.parse(storedUser);
-    if (user.role !== 'admin') {
+    if (currentUser.role !== 'admin') {
       goto('/dashboard');
       return;
     }

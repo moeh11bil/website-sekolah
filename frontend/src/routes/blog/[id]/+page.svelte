@@ -3,8 +3,16 @@
   import { page } from '$app/stores';
   import { API_URL, getImageUrl } from '$lib/config';
   import type { Readable } from 'svelte/store';
+  import DOMPurify from 'dompurify';
 
   const siteName = getContext<Readable<string>>('siteNameStore');
+
+  function stripHtml(html: string): string {
+    if (typeof document === 'undefined') return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent || div.innerText || '').trim();
+  }
 
   interface Post {
     id: number;
@@ -58,7 +66,7 @@
 
 <svelte:head>
   <title>{post ? post.title : 'Post'} - {$siteName}</title>
-  <meta name="description" content={post ? post.content.substring(0, 150) : 'Detail blog post'} />
+  <meta name="description" content={post ? stripHtml(post.content).substring(0, 150) : 'Detail blog post'} />
 </svelte:head>
 
 <div class="max-w-4xl mx-auto">
@@ -113,7 +121,7 @@
         </div>
 
         <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-          {@html post.content}
+          {@html DOMPurify.sanitize(post.content)}
         </div>
 
         <div class="mt-12 pt-8 border-t border-primary-100">

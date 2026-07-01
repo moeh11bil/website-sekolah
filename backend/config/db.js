@@ -15,7 +15,9 @@ async function connectDB() {
     await pool.getConnection();
   } catch (error) {
     console.error('Error connecting to MySQL:', error.message);
-    // process.exit(1); // Removed to allow server to start
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
   }
 }
 

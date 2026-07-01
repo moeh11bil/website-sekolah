@@ -4,19 +4,8 @@
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
   import type { Writable } from 'svelte/store';
-  import type { AboutPage, SchoolInfo } from '../../routes/+layout.svelte';
+  import type { AboutPage, SchoolInfo } from '$lib/types';
   import { API_URL } from '$lib/config';
-
-  interface AboutPage {
-    id: number;
-    sejarah: string;
-    visi: string;
-    misi: string;
-    fasilitas: string;
-    kontak: string;
-    image_url: string | null;
-    status: 'active' | 'inactive';
-  }
 
   const aboutStore = getContext<Writable<AboutPage | null>>('aboutStore');
   const schoolInfoStore = getContext<Writable<SchoolInfo | null>>('schoolInfoStore');
@@ -56,12 +45,7 @@
       schoolInfo = value;
       loading = false;
     });
-    fetchData();
   });
-
-  $: if (browser && $page.url && $page.url.pathname) {
-    fetchData();
-  }
 
   onDestroy(() => {
     if (unsubscribeAbout) unsubscribeAbout();
@@ -131,13 +115,13 @@
         {:else if aboutData && contactInfo}
           <address class="not-italic text-primary-200">
             {#if contactInfo.alamat}
-              <p>{@html contactInfo.alamat}</p>
+              <p>{contactInfo.alamat}</p>
             {/if}
             {#if contactInfo.telepon}
-              <p class="mt-2">{@html contactInfo.telepon}</p>
+              <p class="mt-2">{contactInfo.telepon}</p>
             {/if}
             {#if contactInfo.email}
-              <p>{@html contactInfo.email}</p>
+              <p>{contactInfo.email}</p>
             {/if}
           </address>
         {:else}

@@ -8,34 +8,8 @@
   import Footer from '$lib/components/Footer.svelte';
   import { themes, applyTheme, getCurrentTheme } from '$lib/theme';
   import { API_URL } from '$lib/config';
+  import type { User, AboutPage, SchoolInfo } from '$lib/types';
   import "../app.css";
-
-  // Define the User interface
-  export interface User {
-    id: number;
-    username: string;
-    role: 'admin' | 'teacher' | 'student';
-  }
-
-  // Define the AboutPage interface
-  export interface AboutPage {
-    id: number;
-    sejarah: string;
-    visi: string;
-    misi: string;
-    fasilitas: string;
-    kontak: string;
-    image_url: string | null;
-    status: 'active' | 'inactive';
-  }
-
-  // Define the SchoolInfo interface
-  export interface SchoolInfo {
-    id?: number;
-    school_name: string;
-    school_moto: string;
-    logo_url?: string | null;
-  }
 
   // 1. Create the stores here in the root layout
   const user = writable<User | null>(null);
@@ -82,7 +56,7 @@
       }
 
       // Apply the theme
-      const theme = themes[themeName];
+      const theme = themes[themeName] || themes['emerald'];
       applyTheme(theme);
 
       // Update DOM attribute
@@ -109,8 +83,6 @@
         if (data && data.status === 'active') {
           aboutData.set(data);
         }
-      } else if (response.status === 401) {
-        handleLogout();
       }
     } catch (e) {
       console.error("Failed to fetch about page data", e);
@@ -122,8 +94,6 @@
       if (response.ok) {
         const data = await response.json();
         schoolInfo.set(data);
-      } else if (response.status === 401) {
-        handleLogout();
       }
     } catch (e) {
       console.error("Failed to fetch school info data", e);
