@@ -96,10 +96,7 @@
 
       const response = await apiRequest('/api/admin/school-info', {
         method: 'POST',
-        body: formData, // Don't include Content-Type header when using FormData
-        headers: {
-          'Authorization': getAuthHeaders().Authorization
-        }
+        body: formData,
       });
 
       if (response.ok) {
