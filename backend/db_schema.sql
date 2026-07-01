@@ -8,6 +8,7 @@ USE sekolah_modern;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
+    full_name VARCHAR(255) DEFAULT '',
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'teacher', 'student') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
