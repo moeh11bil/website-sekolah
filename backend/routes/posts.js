@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     const totalPosts = countResult[0].total;
     const totalPages = Math.ceil(totalPosts / limitNum);
 
-    let query = `SELECT p.id, p.title, LEFT(REGEXP_REPLACE(p.content, '<[^>]*>', ''), 200) AS content_snippet, p.status, p.created_at, p.published_at, u.full_name AS author, c.name AS category_name, p.image_url 
+    let query = `SELECT p.id, p.title, LEFT(p.content, 200) AS content_snippet, p.status, p.created_at, p.published_at, u.full_name AS author, c.name AS category_name, p.image_url 
                  FROM posts p JOIN users u ON p.author_id = u.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'published'`;
     let params = [];
 
