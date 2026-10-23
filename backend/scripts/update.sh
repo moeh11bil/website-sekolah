@@ -127,15 +127,15 @@ for f in .env .env.production; do
   fi
 done
 if [ -n "$PREV_COMMIT" ]; then
-  if git bundle create "$UPDATE_BACKUP_DIR/repo-$PREV_COMMIT-$TS.bundle" HEAD >> "$LOG_FILE" 2>&1; then
-    log "Cadangan git bundle repo-$PREV_COMMIT-$TS.bundle"
+  if git archive --format=tar.gz -o "$UPDATE_BACKUP_DIR/repo-$PREV_COMMIT-$TS.tar.gz" HEAD >> "$LOG_FILE" 2>&1; then
+    log "Cadangan arsip kode repo-$PREV_COMMIT-$TS.tar.gz"
   else
-    log "PERINGATAN: git bundle gagal dibuat (lanjut tanpa bundle)"
+    log "PERINGATAN: arsip kode gagal dibuat (lanjut tanpa arsip)"
   fi
 fi
 # Rotasi: simpan 5 cadangan terbaru per jenis. Pola .env.[0-9]* hanya
 # cocokkan .env.<timestamp> sehingga tak tumpang-tindih dengan .env.production.*
-ls -1t "$UPDATE_BACKUP_DIR"/repo-*.bundle        2>/dev/null | tail -n +6 | xargs -r rm -f
+ls -1t "$UPDATE_BACKUP_DIR"/repo-*.tar.gz        2>/dev/null | tail -n +6 | xargs -r rm -f
 ls -1t "$UPDATE_BACKUP_DIR"/.env.[0-9]*           2>/dev/null | tail -n +6 | xargs -r rm -f
 ls -1t "$UPDATE_BACKUP_DIR"/.env.production.[0-9]* 2>/dev/null | tail -n +6 | xargs -r rm -f
 
