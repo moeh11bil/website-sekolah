@@ -92,7 +92,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (posts[0]) return res.json(posts[0]);
 
     if (!req.user) {
-      return res.status(401).json({ message: 'Authentication required for this post' });
+      // Post tidak dipublikasikan dan penanya tidak login: samakan dengan
+      // post yang tidak ada (404) agar konsisten & tidak membocorkan info
+      return res.status(404).json({ message: 'Post not found' });
     }
 
     let query, params;

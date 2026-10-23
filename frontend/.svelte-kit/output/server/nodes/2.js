@@ -3,6 +3,6 @@
 export const index = 2;
 let component_cache;
 export const component = async () => component_cache ??= (await import('../entries/pages/dashboard/_layout.svelte.js')).default;
-export const imports = ["_app/immutable/nodes/2.9ccf8365.js","_app/immutable/chunks/scheduler.cbb07bcc.js","_app/immutable/chunks/index.a71001cf.js","_app/immutable/chunks/navigation.8da43464.js","_app/immutable/chunks/singletons.8abfd548.js","_app/immutable/chunks/index.bbafbdb2.js","_app/immutable/chunks/auth.fdd20c69.js","_app/immutable/chunks/theme.f6128fb8.js","_app/immutable/chunks/stores.17b2a483.js","_app/immutable/chunks/each.1764fa3c.js","_app/immutable/chunks/toast.5fd52860.js"];
-export const stylesheets = ["_app/immutable/assets/2.4395e211.css"];
+export const imports = ["_app/immutable/nodes/2.5aeb94a2.js","_app/immutable/chunks/scheduler.4b739552.js","_app/immutable/chunks/index.476c8476.js","_app/immutable/chunks/navigation.7fbeb62e.js","_app/immutable/chunks/singletons.b54e0881.js","_app/immutable/chunks/index.154b07ad.js","_app/immutable/chunks/paths.0ca1db77.js","_app/immutable/chunks/auth.3e4b7cda.js","_app/immutable/chunks/theme.f119a0d8.js","_app/immutable/chunks/config.17003963.js","_app/immutable/chunks/session.026e952d.js","_app/immutable/chunks/toast.485d4e17.js","_app/immutable/chunks/stores.915d5ed7.js"];
+export const stylesheets = ["_app/immutable/assets/2.83da9ffd.css"];
 export const fonts = [];

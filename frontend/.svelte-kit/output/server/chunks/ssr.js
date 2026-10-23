@@ -25,6 +25,11 @@ function subscribe(store, ...callbacks) {
   const unsub = store.subscribe(...callbacks);
   return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
+function get_store_value(store) {
+  let value;
+  subscribe(store, (_) => value = _)();
+  return value;
+}
 let current_component;
 function set_current_component(component) {
   current_component = component;
@@ -129,12 +134,13 @@ function add_attribute(name, value, boolean) {
 }
 export {
   subscribe as a,
-  each as b,
+  add_attribute as b,
   create_ssr_component as c,
-  add_attribute as d,
+  each as d,
   escape as e,
-  safe_not_equal as f,
+  get_store_value as f,
   getContext as g,
+  safe_not_equal as h,
   is_function as i,
   missing_component as m,
   noop as n,

@@ -27,6 +27,25 @@ router.post('/register', protect, authorize('admin'), authValidation.register, v
   }
 });
 
+router.get('/me', protect, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      'SELECT id, username, full_name, role FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ message: 'Account no longer exists' });
+    }
+
+    // Data terkini dari DB - klien pakai ini untuk menyinkronkan role/status
+    res.json({ user: rows[0] });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.post('/login', authValidation.login, validate, async (req, res) => {
   const { username, password } = req.body;
 

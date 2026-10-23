@@ -25,9 +25,9 @@ function dismiss(id: number) {
 }
 
 export const toast = {
-  success: (msg: string) => add(msg, 'success'),
-  error: (msg: string) => add(msg, 'error'),
-  warning: (msg: string) => add(msg, 'warning'),
-  info: (msg: string) => add(msg, 'info'),
+  success: (msg: string, duration?: number) => add(msg, 'success', duration),
+  error: (msg: string, duration?: number) => add(msg, 'error', duration),
+  warning: (msg: string, duration?: number) => add(msg, 'warning', duration),
+  info: (msg: string, duration?: number) => add(msg, 'info', duration),
   dismiss
 };

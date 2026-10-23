@@ -8,6 +8,27 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+/** Baca klaim `exp` (detik sejak epoch) dari payload JWT - hanya membaca,
+ *  tanpa verifikasi signature (verifikasi tetap tugas server). */
+export function readTokenExpiration(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const payloadPart = token.split('.')[1];
+    if (!payloadPart) return null;
+    const json = atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(json);
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True bila token sudah melewati masa berlakunya (klaim `exp`). */
+export function isTokenExpired(token: string | null): boolean {
+  const exp = readTokenExpiration(token);
+  return exp !== null && exp * 1000 <= Date.now();
+}
+
 const createAuthStore = () => {
   const storedUser = browser ? localStorage.getItem('user') : null;
   const storedToken = browser ? localStorage.getItem('token') : null;
@@ -22,10 +43,21 @@ const createAuthStore = () => {
     }
   }
 
+  // Token sudah kedaluwarsa saat aplikasi dibuka: JANGAN tampilkan status
+  // login palsu. Bersihkan penyimpanan dan tandai sesi berakhir agar layout
+  // dapat menampilkan pemberitahuan + memaksa login ulang.
+  const tokenExpired = !!parsedUser && isTokenExpired(storedToken);
+  if (tokenExpired && browser) {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    sessionStorage.setItem('sessionExpired', '1');
+    parsedUser = null;
+  }
+
   const initial: AuthState = {
     user: parsedUser,
-    token: parsedUser ? storedToken : null,
-    isAuthenticated: !!parsedUser && !!storedToken
+    token: !tokenExpired && parsedUser ? storedToken : null,
+    isAuthenticated: !tokenExpired && !!parsedUser && !!storedToken
   };
 
   const { subscribe, set, update } = writable<AuthState>(initial);

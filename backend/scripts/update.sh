@@ -21,8 +21,26 @@ log "Memulai proses update..."
 cd "$PROJECT_DIR" || { log "Gagal masuk ke direktori $PROJECT_DIR"; exit 1; }
 
 log "Git pull..."
+# Amankan file .env / .env.production sebelum reset: file-file ini sudah
+# tidak dilacak git (berisi rahasia), sehingga `git reset --hard` akan
+# menghapusnya dari working tree jika tidak dicadangkan.
+ENV_BACKUP_DIR="$(mktemp -d)"
+for f in .env .env.production; do
+  if [ -f "$BACKEND_DIR/$f" ]; then
+    cp "$BACKEND_DIR/$f" "$ENV_BACKUP_DIR/$f"
+  fi
+done
+
 git fetch origin main >> "$LOG_FILE" 2>&1
 git reset --hard origin/main >> "$LOG_FILE" 2>&1
+
+for f in .env .env.production; do
+  if [ -f "$ENV_BACKUP_DIR/$f" ]; then
+    cp "$ENV_BACKUP_DIR/$f" "$BACKEND_DIR/$f"
+    log "Restored $f"
+  fi
+done
+rm -rf "$ENV_BACKUP_DIR"
 
 log "Install backend dependencies..."
 cd "$BACKEND_DIR" && timeout 120 npm install --prefer-offline --no-audit --no-fund >> "$LOG_FILE" 2>&1 || true
@@ -55,7 +73,43 @@ if [ -n "$BACKEND_DEPLOY" ]; then
 fi
 
 log "Update selesai! Restart server via pm2..."
-pm2 restart backend --update-env >> "$LOG_FILE" 2>&1
+# Nama proses pm2 berbeda antar deploy (backend / website-sekolah /
+# sekolah-backend). Deteksi berdasarkan path script yang dijalankan agar
+# restart selalu kena, dan gagal restart TIDAK diam-diam.
+BACKEND_PM2_NAMES=$(pm2 jlist 2>/dev/null | node -e '
+  try {
+    const list = JSON.parse(require("fs").readFileSync(0, "utf8"));
+    const names = list
+      .filter(p => /backend[\/\\]index\.js$/.test((p.pm2_env && p.pm2_env.pm_exec_path) || ""))
+      .map(p => p.name);
+    console.log(names.join(" "));
+  } catch (e) {
+    process.exit(0);
+  }
+' 2>/dev/null)
 
-log "Server berhasil direstart"
+restarted=0
+for name in $BACKEND_PM2_NAMES; do
+  if pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
+    log "Backend pm2 '$name' direstart"
+    restarted=1
+  fi
+done
+
+if [ "$restarted" -eq 0 ]; then
+  # Cadangan: coba nama umum yang dipakai skrip deploy / panduan
+  for name in backend website-sekolah sekolah-backend; do
+    if pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
+      log "Backend pm2 '$name' direstart"
+      restarted=1
+      break
+    fi
+  done
+fi
+
+if [ "$restarted" -eq 1 ]; then
+  log "Server berhasil direstart"
+else
+  log "PERINGATAN: tidak menemukan proses pm2 backend - lakukan restart MANUAL!"
+fi
 echo "DONE" >> "$LOG_FILE"

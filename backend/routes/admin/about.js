@@ -42,32 +42,41 @@ router.post('/', protect, authorize(['admin']), imageUpload({ subDir: 'pages', w
 
   try {
     const [existing] = await pool.execute(
-      'SELECT id, image_url FROM page_config WHERE page_type = "about" ORDER BY id DESC LIMIT 1'
+      'SELECT id, sejarah, visi, misi, fasilitas, kontak, image_url FROM page_config WHERE page_type = "about" ORDER BY id DESC LIMIT 1'
     );
+
+    // Field boleh tidak dikirim pada partial update - pertahankan nilai lama
+    // (sebelumnya undefined masuk ke bind parameter dan menyebabkan error 500)
+    const prev = existing[0] || {};
+    const sejarahVal = sejarah ?? prev.sejarah ?? null;
+    const visiVal = visi ?? prev.visi ?? null;
+    const misiVal = misi ?? prev.misi ?? null;
+    const fasilitasVal = fasilitas ?? prev.fasilitas ?? null;
+    const kontakVal = kontak ?? prev.kontak ?? null;
 
     if (existing.length > 0) {
       if (imageUrl) {
         deleteOldImage(existing[0].image_url);
         await pool.execute(
           'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
-          [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active', existing[0].id]
+          [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, imageUrl, status || 'active', existing[0].id]
         );
       } else {
         await pool.execute(
           'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
-          [sejarah, visi, misi, fasilitas, kontak, status || 'active', existing[0].id]
+          [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, status || 'active', existing[0].id]
         );
       }
     } else {
       if (imageUrl) {
         await pool.execute(
           'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, image_url, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, "Tentang Kami", "about", ?, NOW(), NOW())',
-          [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active']
+          [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, imageUrl, status || 'active']
         );
       } else {
         await pool.execute(
           'INSERT INTO page_config (sejarah, visi, misi, fasilitas, kontak, title, page_type, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, "Tentang Kami", "about", ?, NOW(), NOW())',
-          [sejarah, visi, misi, fasilitas, kontak, status || 'active']
+          [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, status || 'active']
         );
       }
     }
@@ -86,7 +95,7 @@ router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'pages',
 
   try {
     const [existing] = await pool.execute(
-      'SELECT id, image_url FROM page_config WHERE page_type = "about" AND id = ?',
+      'SELECT id, sejarah, visi, misi, fasilitas, kontak, image_url FROM page_config WHERE page_type = "about" AND id = ?',
       [id]
     );
 
@@ -95,16 +104,24 @@ router.put('/:id', protect, authorize(['admin']), imageUpload({ subDir: 'pages',
       return res.status(404).json({ message: 'About config not found' });
     }
 
+    // Partial update: field yang tidak dikirim dipertahankan nilainya
+    const prev = existing[0];
+    const sejarahVal = sejarah ?? prev.sejarah ?? null;
+    const visiVal = visi ?? prev.visi ?? null;
+    const misiVal = misi ?? prev.misi ?? null;
+    const fasilitasVal = fasilitas ?? prev.fasilitas ?? null;
+    const kontakVal = kontak ?? prev.kontak ?? null;
+
     if (imageUrl) {
       deleteOldImage(existing[0].image_url);
       await pool.execute(
         'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, image_url = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
-        [sejarah, visi, misi, fasilitas, kontak, imageUrl, status || 'active', id]
+        [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, imageUrl, status || 'active', id]
       );
     } else {
       await pool.execute(
         'UPDATE page_config SET sejarah = ?, visi = ?, misi = ?, fasilitas = ?, kontak = ?, title = "Tentang Kami", status = ?, updated_at = NOW() WHERE id = ?',
-        [sejarah, visi, misi, fasilitas, kontak, status || 'active', id]
+        [sejarahVal, visiVal, misiVal, fasilitasVal, kontakVal, status || 'active', id]
       );
     }
     res.json({ message: 'About configuration updated successfully' });

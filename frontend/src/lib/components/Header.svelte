@@ -5,6 +5,7 @@
   import { browser } from '$app/environment';
   import type { Writable } from 'svelte/store';
   import type { User, SchoolInfo } from '$lib/types';
+  import { auth } from '$lib/stores';
   import { API_URL, getImageUrl } from '$lib/config';
 
   const user = getContext<Writable<User | null>>('userStore');
@@ -12,7 +13,9 @@
 
   let schoolData: SchoolInfo | null = null;
   let unsubscribe: (() => void) | null = null;
-  let currentPath = '';
+
+  // Reactive: closes the mobile menu automatically whenever the route changes
+  $: currentPath = $page.url.pathname;
 
   async function fetchSchoolInfo() {
     if (!browser) return;
@@ -32,9 +35,14 @@
     unsubscribe = schoolInfoStore.subscribe(value => {
       schoolData = value;
     });
-    if ($page.url) {
-      currentPath = $page.url.pathname;
-    }
+    window.addEventListener('click', handleWindowClick);
+    window.addEventListener('keydown', handleWindowKeydown);
+
+    // Cleanup only runs in the browser (never during SSR render)
+    return () => {
+      window.removeEventListener('click', handleWindowClick);
+      window.removeEventListener('keydown', handleWindowKeydown);
+    };
   });
 
   $: if (browser && schoolInfoStore && !schoolData) {
@@ -45,21 +53,56 @@
     if (unsubscribe) unsubscribe();
   });
 
+  const roleLabels: Record<User['role'], string> = {
+    admin: 'Administrator',
+    teacher: 'Guru',
+    student: 'Siswa'
+  };
+
+  $: displayName = $user?.full_name || $user?.username || '';
+  $: displayRole = $user ? roleLabels[$user.role] || $user.role : '';
+  $: initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0])
+    .join('')
+    .toUpperCase();
+
   let showLogoutModal = false;
+  let userMenuOpen = false;
+  let userMenuRef: HTMLElement | null = null;
+
+  function toggleUserMenu() {
+    userMenuOpen = !userMenuOpen;
+  }
+
+  function closeUserMenu() {
+    userMenuOpen = false;
+  }
+
+  // Close the user dropdown when clicking outside of it
+  function handleWindowClick(event: MouseEvent) {
+    if (userMenuOpen && userMenuRef && !userMenuRef.contains(event.target as Node)) {
+      userMenuOpen = false;
+    }
+  }
+
+  // Close the user dropdown with the Escape key
+  function handleWindowKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') userMenuOpen = false;
+  }
 
   function confirmLogout() {
     showLogoutModal = true;
     mobileMenuOpen = false;
+    userMenuOpen = false;
   }
 
   function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     localStorage.setItem('logoutSuccess', 'true');
-    if (user) {
-      user.set(null);
-    }
-    window.location.href = '/login';
+    auth.logout(); // clears localStorage + updates the auth store (user store follows)
+    window.location.href = '/';
   }
 
   let isScrolled = false;
@@ -73,8 +116,13 @@
     mobileMenuOpen = !mobileMenuOpen;
   }
 
+  function closeMobileMenu() {
+    mobileMenuOpen = false;
+  }
+
   $: if (currentPath) {
     mobileMenuOpen = false;
+    userMenuOpen = false;
   }
 
   function isActive(currentPath: string, targetPath: string): boolean {
@@ -157,16 +205,65 @@
         </a>
       </li>
       {#if $user}
-        <li>
-          <a href="/dashboard/{$user.role}" 
-             class="hover:text-primary-100 transition-colors duration-200 border-b-2 {isActive($page.url.pathname, '/dashboard') ? 'border-white text-white' : 'border-transparent text-primary-50'} capitalize">
-            Dashboard
-          </a>
-        </li>
-        <li>
-          <button on:click={confirmLogout} class="bg-primary-800 hover:bg-primary-900 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105">
-            Logout
+        <li class="pl-5 border-l border-white/20 relative" bind:this={userMenuRef}>
+          <button
+            type="button"
+            on:click={toggleUserMenu}
+            aria-haspopup="menu"
+            aria-expanded={userMenuOpen}
+            class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30 transition-colors"
+          >
+            <span class="w-9 h-9 flex-shrink-0 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
+              {initials}
+            </span>
+            <span class="flex flex-col items-start leading-tight text-left min-w-0">
+              <span class="text-sm font-semibold text-white max-w-[170px] truncate" title={displayName}>
+                {displayName}
+              </span>
+              <span class="text-[11px] font-medium text-primary-200 capitalize">
+                {displayRole}
+              </span>
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-200 transition-transform duration-200 {userMenuOpen ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
+
+          {#if userMenuOpen}
+            <div role="menu" class="absolute right-0 top-full mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+              <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 mb-1">
+                <span class="w-10 h-10 flex-shrink-0 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold text-white select-none" aria-hidden="true">
+                  {initials}
+                </span>
+                <div class="min-w-0 leading-tight">
+                  <p class="text-sm font-semibold text-gray-900 truncate" title={displayName}>{displayName}</p>
+                  <p class="text-xs text-gray-500 capitalize">{displayRole}</p>
+                </div>
+              </div>
+              <a
+                href="/dashboard/{$user.role}"
+                on:click={closeUserMenu}
+                role="menuitem"
+                class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors capitalize"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Dashboard
+              </a>
+              <button
+                type="button"
+                on:click={confirmLogout}
+                role="menuitem"
+                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
+          {/if}
         </li>
       {:else}
         <li>
@@ -183,29 +280,38 @@
     <div class="lg:hidden absolute top-full left-0 w-full bg-primary-700 shadow-xl border-t border-primary-500 animate-in slide-in-from-top duration-200">
       <ul class="flex flex-col p-4 space-y-4">
         <li>
-          <a href="/" class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
+          <a href="/" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
             Beranda
           </a>
         </li>
         <li>
-          <a href="/tentang-kami" class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/tentang-kami') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
+          <a href="/tentang-kami" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/tentang-kami') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
             Tentang Kami
           </a>
         </li>
         <li>
-          <a href="/blog" class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/blog') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
+          <a href="/blog" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/blog') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
             Blog
           </a>
         </li>
         <li>
-          <a href="/galeri" class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/galeri') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
+          <a href="/galeri" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/galeri') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors">
             Galeri
           </a>
         </li>
         {#if $user}
+          <li class="flex items-center gap-3 bg-primary-800/60 border border-white/10 rounded-lg px-4 py-3">
+            <span class="w-9 h-9 flex-shrink-0 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-xs font-bold text-white select-none" aria-hidden="true">
+              {initials}
+            </span>
+            <span class="min-w-0 leading-tight">
+              <span class="block text-sm font-semibold text-white truncate" title={displayName}>{displayName}</span>
+              <span class="block text-[11px] text-primary-200 capitalize">{displayRole}</span>
+            </span>
+          </li>
           <li>
-            <a href="/dashboard/{$user.role}" class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/dashboard') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors capitalize">
-              Dashboard {$user.role}
+            <a href="/dashboard/{$user.role}" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg {isActive($page.url.pathname, '/dashboard') ? 'bg-primary-800 text-white font-bold' : 'text-primary-100 hover:bg-primary-600'} transition-colors capitalize">
+              Dashboard
             </a>
           </li>
           <li>
@@ -215,7 +321,7 @@
           </li>
         {:else}
           <li>
-            <a href="/login" class="block py-2 px-4 rounded-lg bg-white text-primary-700 text-center font-bold hover:bg-primary-50 transition-colors">
+            <a href="/login" on:click={closeMobileMenu} class="block py-2 px-4 rounded-lg bg-white text-primary-700 text-center font-bold hover:bg-primary-50 transition-colors">
               Login
             </a>
           </li>

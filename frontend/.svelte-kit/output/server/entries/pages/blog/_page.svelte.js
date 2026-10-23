@@ -1,4 +1,4 @@
-import { c as create_ssr_component, g as getContext, a as subscribe, e as escape, d as add_attribute } from "../../../chunks/ssr.js";
+import { c as create_ssr_component, g as getContext, a as subscribe, e as escape, b as add_attribute } from "../../../chunks/ssr.js";
 const _page_svelte_svelte_type_style_lang = "";
 const css = {
   code: ".prose ul{list-style-type:disc;padding-left:1rem;margin-top:0.25rem;margin-bottom:0.25rem}.prose ol{list-style-type:decimal;padding-left:1rem;margin-top:0.25rem;margin-bottom:0.25rem}.prose li{margin-top:0.125rem;margin-bottom:0.125rem}",

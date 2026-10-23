@@ -2,8 +2,11 @@
   import { goto } from '$app/navigation';
   import { onMount, onDestroy, getContext } from 'svelte';
   import { get } from 'svelte/store';
+  import { page } from '$app/stores';
   import { auth } from '$lib/stores';
   import { API_URL } from '$lib/config';
+  import { apiRequest } from '$lib/api';
+  import { consumeSessionExpiredNotice } from '$lib/session';
   import type { Readable } from 'svelte/store';
 
   const siteName = getContext<Readable<string>>('siteNameStore');
@@ -11,21 +14,22 @@
   let username = '';
   let password = '';
   let errorMessage: string | null = null;
-  let successMessage: string | null = null;
+  let sessionExpiredNotice = false;
   let loading = false;
   let isCheckingAuth = true;
 
   let unsubscribeAuth: (() => void) | null = null;
 
   onMount(() => {
-    if (localStorage.getItem('logoutSuccess') === 'true') {
-        successMessage = 'Anda telah berhasil logout.';
-        localStorage.removeItem('logoutSuccess');
-        setTimeout(() => { successMessage = null; }, 3000);
-    }
+    // Tampilkan pesan bila diarahkan ke sini karena sesi berakhir
+    // (?reason=expired atau penanda di sessionStorage - sekali pakai)
+    const byParam = $page.url.searchParams.get('reason') === 'expired';
+    const byFlag = consumeSessionExpiredNotice(); // selalu coba bersihkan penanda
+    sessionExpiredNotice = byParam || byFlag;
+
     const currentState = get(auth);
     if (currentState.isAuthenticated && currentState.user?.role) {
-      goto(`/dashboard/${currentState.user.role}`);
+      refreshRoleThenEnter(currentState.user.role);
       return;
     }
     if (currentState.isAuthenticated && !currentState.user?.role) {
@@ -34,6 +38,32 @@
     isCheckingAuth = false;
   });
 
+  /** Ambil role terkini dari server sebelum masuk dashboard, agar user yang
+   *  role-nya berubah tidak diarahkan ke halaman yang tak lagi berhak
+   *  (mencegah loop login <-> dashboard). Bila token ditolak, penjepit 401
+   *  melakukan logout paksa dan kita tetap di halaman login. */
+  async function refreshRoleThenEnter(fallbackRole: string) {
+    let role = fallbackRole;
+    try {
+      const response = await apiRequest('/api/auth/me');
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user?.role) {
+          auth.updateUser(data.user);
+          role = data.user.role;
+        }
+      } else if (response.status === 401) {
+        // Sudah dilakukan logout paksa - tampilkan login + pesan sesi berakhir
+        sessionExpiredNotice = consumeSessionExpiredNotice();
+        isCheckingAuth = false;
+        return;
+      }
+    } catch {
+      /* jaringan bermasalah: pakai role lokal */
+    }
+    goto(`/dashboard/${role}`);
+  }
+
   onDestroy(() => {
     if (unsubscribeAuth) unsubscribeAuth();
   });
@@ -41,7 +71,6 @@
   async function handleLogin() {
     loading = true;
     errorMessage = null;
-    successMessage = null;
 
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -56,6 +85,7 @@
 
       if (response.ok) {
         loading = true;
+        consumeSessionExpiredNotice(); // bersihkan sisa penanda sesi lama
         auth.login(data.user, data.token);
         goto(`/dashboard/${data.user.role}`);
       } else {
@@ -94,21 +124,21 @@
         <p class="text-primary-600 mt-2">Silakan masuk ke akun Anda</p>
       </div>
 
+      {#if sessionExpiredNotice}
+        <div class="bg-amber-100 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg mb-6 flex items-center" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Sesi Anda telah berakhir. Silakan login kembali.</span>
+        </div>
+      {/if}
+
       {#if errorMessage}
         <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center" role="alert">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>{errorMessage}</span>
-        </div>
-      {/if}
-
-      {#if successMessage}
-        <div class="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center" role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{successMessage}</span>
         </div>
       {/if}
 

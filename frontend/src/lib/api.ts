@@ -1,6 +1,6 @@
-import { goto } from '$app/navigation';
 import { API_URL } from '$lib/config';
 import { auth } from '$lib/stores/auth';
+import { forceLogout } from '$lib/session';
 
 export async function apiRequest(
   url: string,
@@ -27,8 +27,8 @@ export async function apiRequest(
   });
 
   if (response.status === 401 && autoLogout) {
-    auth.logout();
-    goto('/login');
+    // Sesi tidak berlaku: logout paksa + pemberitahuan (lihat lib/session)
+    forceLogout();
     return response;
   }
 
@@ -54,8 +54,8 @@ export async function apiUpload(
   });
 
   if (response.status === 401 && autoLogout) {
-    auth.logout();
-    goto('/login');
+    // Sesi tidak berlaku: logout paksa + pemberitahuan (lihat lib/session)
+    forceLogout();
     return response;
   }
 

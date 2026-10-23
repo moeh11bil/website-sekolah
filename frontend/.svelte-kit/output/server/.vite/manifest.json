@@ -40,15 +40,6 @@
       "_ssr.js"
     ]
   },
-  "node_modules/@sveltejs/kit/src/runtime/components/error.svelte": {
-    "file": "entries/fallbacks/error.svelte.js",
-    "imports": [
-      "_ssr.js",
-      "_stores.js"
-    ],
-    "isEntry": true,
-    "src": "node_modules/@sveltejs/kit/src/runtime/components/error.svelte"
-  },
   "node_modules/@sveltejs/kit/src/runtime/server/index.js": {
     "file": "index.js",
     "imports": [
@@ -67,19 +58,28 @@
     "isDynamicEntry": true,
     "src": "src/hooks.server.ts"
   },
+  "src/routes/+error.svelte": {
+    "file": "entries/pages/_error.svelte.js",
+    "imports": [
+      "_ssr.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/+error.svelte"
+  },
   "src/routes/+layout.css": {
-    "file": "_app/immutable/assets/_layout.45208232.css",
+    "file": "_app/immutable/assets/_layout.f02d7a13.css",
     "src": "src/routes/+layout.css"
   },
   "src/routes/+layout.svelte": {
     "css": [
-      "_app/immutable/assets/_layout.45208232.css"
+      "_app/immutable/assets/_layout.f02d7a13.css"
     ],
     "file": "entries/pages/_layout.svelte.js",
     "imports": [
       "_ssr.js",
       "_index2.js",
-      "_stores.js"
+      "_stores.js",
+      "_auth.js"
     ],
     "isEntry": true,
     "src": "src/routes/+layout.svelte"
@@ -131,19 +131,18 @@
     "src": "src/routes/blog/[id]/+page.svelte"
   },
   "src/routes/dashboard/+layout.css": {
-    "file": "_app/immutable/assets/_layout.4395e211.css",
+    "file": "_app/immutable/assets/_layout.83da9ffd.css",
     "src": "src/routes/dashboard/+layout.css"
   },
   "src/routes/dashboard/+layout.svelte": {
     "css": [
-      "_app/immutable/assets/_layout.4395e211.css"
+      "_app/immutable/assets/_layout.83da9ffd.css"
     ],
     "file": "entries/pages/dashboard/_layout.svelte.js",
     "imports": [
       "_ssr.js",
       "_auth.js",
-      "_stores.js",
-      "_index2.js"
+      "_stores.js"
     ],
     "isEntry": true,
     "src": "src/routes/dashboard/+layout.svelte"
@@ -164,6 +163,14 @@
     ],
     "isEntry": true,
     "src": "src/routes/dashboard/admin/about/+page.svelte"
+  },
+  "src/routes/dashboard/admin/analytics/+page.svelte": {
+    "file": "entries/pages/dashboard/admin/analytics/_page.svelte.js",
+    "imports": [
+      "_ssr.js"
+    ],
+    "isEntry": true,
+    "src": "src/routes/dashboard/admin/analytics/+page.svelte"
   },
   "src/routes/dashboard/admin/categories/+page.svelte": {
     "file": "entries/pages/dashboard/admin/categories/_page.svelte.js",
@@ -354,7 +361,8 @@
   "src/routes/login/+page.svelte": {
     "file": "entries/pages/login/_page.svelte.js",
     "imports": [
-      "_ssr.js"
+      "_ssr.js",
+      "_stores.js"
     ],
     "isEntry": true,
     "src": "src/routes/login/+page.svelte"

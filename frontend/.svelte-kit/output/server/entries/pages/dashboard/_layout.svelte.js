@@ -1,7 +1,6 @@
-import { c as create_ssr_component, a as subscribe, e as escape, b as each, d as add_attribute, v as validate_component } from "../../../chunks/ssr.js";
+import { c as create_ssr_component, a as subscribe, e as escape, v as validate_component } from "../../../chunks/ssr.js";
 import { a as auth } from "../../../chunks/auth.js";
 import { p as page } from "../../../chunks/stores.js";
-import { w as writable } from "../../../chunks/index2.js";
 function client_method(key) {
   {
     if (key === "before_navigate" || key === "after_navigate" || key === "on_navigate") {
@@ -22,7 +21,7 @@ function client_method(key) {
 }
 const goto = /* @__PURE__ */ client_method("goto");
 const Sidebar_svelte_svelte_type_style_lang = "";
-const css$1 = {
+const css = {
   code: ".animate-in.svelte-1p2dp8c{animation-duration:0.3s}",
   map: null
 };
@@ -36,9 +35,10 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     system: false,
     website: false,
     gallery: false,
-    posts: false
+    posts: false,
+    stats: false
   };
-  $$result.css.add(css$1);
+  $$result.css.add(css);
   currentRole = $auth.user?.role;
   {
     {
@@ -51,12 +51,22 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         expandedSections.gallery = true;
       if (path.includes("/dashboard/posts"))
         expandedSections.posts = true;
+      if (path.includes("/admin/analytics"))
+        expandedSections.stats = true;
     }
   }
   $$unsubscribe_page();
   $$unsubscribe_auth();
   return `<aside class="w-full lg:w-64 bg-white lg:bg-gradient-to-b lg:from-white lg:to-primary-50 p-4 rounded-2xl shadow-lg border border-primary-100 mb-6 lg:mb-0 transition-all duration-300"> <button class="lg:hidden w-full flex items-center justify-between py-2 px-4 bg-primary-600 text-white rounded-xl mb-2 shadow-md"><span class="flex items-center font-bold"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg> ${escape("Tampilkan Menu Dashboard")}</span> <svg xmlns="http://www.w3.org/2000/svg" class="${"h-5 w-5 transition-transform duration-300 " + escape("", true)}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button> <div class="${escape("hidden", true) + " lg:block"}"><h2 class="hidden lg:flex text-lg font-semibold text-primary-700 mb-6 items-center px-2" data-svelte-h="svelte-wj4t93"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       Navigasi Cepat</h2> <div class="space-y-3">${currentRole === "admin" ? ` <div class="border-b border-primary-50 lg:border-none pb-2 lg:pb-0"><button class="${"w-full flex items-center justify-between py-2 px-3 rounded-lg " + escape(
+    expandedSections.stats ? "bg-primary-100 text-primary-800" : "text-gray-600 hover:bg-gray-50",
+    true
+  ) + " font-medium transition-colors duration-200"}"><span class="flex items-center" data-svelte-h="svelte-11ioutl"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              Statistik</span> <svg xmlns="http://www.w3.org/2000/svg" class="${"w-4 h-4 transition-transform duration-200 " + escape(expandedSections.stats ? "rotate-180" : "", true)}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button> ${expandedSections.stats ? `<ul class="mt-1 ml-6 space-y-1 border-l-2 border-primary-200 pl-4 animate-in fade-in slide-in-from-top-2 duration-200 svelte-1p2dp8c"><li><a href="/dashboard/admin/analytics" class="${"flex items-center w-full text-left py-2 px-3 rounded-lg truncate " + escape(
+    $page.url.pathname === "/dashboard/admin/analytics" ? "bg-primary-500 text-white shadow-sm" : "hover:bg-primary-50 text-gray-600",
+    true
+  ) + " transition-colors duration-200 text-sm font-medium"}"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  Pengunjung Web</a></li></ul>` : ``}</div>  <div class="border-b border-primary-50 lg:border-none pb-2 lg:pb-0"><button class="${"w-full flex items-center justify-between py-2 px-3 rounded-lg " + escape(
     expandedSections.system ? "bg-primary-100 text-primary-800" : "text-gray-600 hover:bg-gray-50",
     true
   ) + " font-medium transition-colors duration-200"}"><span class="flex items-center" data-svelte-h="svelte-yoe8f1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -134,33 +144,6 @@ const Sidebar = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   ) + " transition-colors duration-200 text-sm font-bold"}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             Galeri Saya</a></div>` : ``}</div></div> </aside>`;
 });
-const toasts = writable([]);
-const Toast_svelte_svelte_type_style_lang = "";
-const css = {
-  code: "@keyframes svelte-17bfuct-slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}.animate-slide-in.svelte-17bfuct{animation:svelte-17bfuct-slideIn 0.3s ease-out}",
-  map: null
-};
-const Toast = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let $toasts, $$unsubscribe_toasts;
-  $$unsubscribe_toasts = subscribe(toasts, (value) => $toasts = value);
-  const icons = {
-    success: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-    error: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
-    warning: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
-    info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-  };
-  const colors = {
-    success: "bg-green-500",
-    error: "bg-red-500",
-    warning: "bg-yellow-500",
-    info: "bg-primary-500"
-  };
-  $$result.css.add(css);
-  $$unsubscribe_toasts();
-  return `${each($toasts, (t) => {
-    return `<div class="fixed top-4 right-4 z-[9999] animate-slide-in svelte-17bfuct"><div class="${"flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl text-white " + escape(colors[t.type], true) + " min-w-[300px] max-w-md svelte-17bfuct"}"><svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"${add_attribute("d", icons[t.type], 0)}></path></svg> <p class="text-sm font-medium flex-1">${escape(t.message)}</p> <button class="text-white/80 hover:text-white flex-shrink-0" data-svelte-h="svelte-dir185"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> </button></div> </div>`;
-  })}`;
-});
 const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let currentRole;
   let $auth, $$unsubscribe_auth;
@@ -172,7 +155,7 @@ const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
     }
   }
   $$unsubscribe_auth();
-  return `${validate_component(Toast, "Toast").$$render($$result, {}, {}, {})} <div class="container mx-auto p-4 md:p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-xl mt-6 mb-8">${currentRole ? `<div class="flex items-center mb-8"><div class="bg-primary-100 p-3 rounded-xl mr-4" data-svelte-h="svelte-1v1fh1i"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div> <div><h1 class="text-3xl md:text-4xl font-bold text-primary-800 capitalize">Dashboard ${escape(currentRole)}</h1> <p class="text-primary-600">Kelola konten dan aktivitas Anda sebagai ${escape(currentRole)}</p></div></div> <div class="flex flex-col lg:flex-row gap-6">${validate_component(Sidebar, "Sidebar").$$render($$result, {}, {}, {})} <div class="w-full lg:w-3/4 bg-gradient-to-b from-white to-primary-50 p-6 rounded-2xl shadow-lg border border-primary-100">${slots.default ? slots.default({}) : ``}</div></div>` : `<div class="flex justify-center items-center h-64" data-svelte-h="svelte-zp1h75"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div> <p class="ml-4 text-primary-600">Memuat...</p></div>`}</div>`;
+  return `<div class="container mx-auto p-4 md:p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-xl mt-6 mb-8">${currentRole ? `<div class="flex items-center mb-8"><div class="bg-primary-100 p-3 rounded-xl mr-4" data-svelte-h="svelte-1v1fh1i"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div> <div><h1 class="text-3xl md:text-4xl font-bold text-primary-800 capitalize">Dashboard ${escape(currentRole)}</h1> <p class="text-primary-600">Kelola konten dan aktivitas Anda sebagai ${escape(currentRole)}</p></div></div> <div class="flex flex-col lg:flex-row gap-6">${validate_component(Sidebar, "Sidebar").$$render($$result, {}, {}, {})} <div class="w-full lg:w-3/4 bg-gradient-to-b from-white to-primary-50 p-6 rounded-2xl shadow-lg border border-primary-100">${slots.default ? slots.default({}) : ``}</div></div>` : `<div class="flex justify-center items-center h-64" data-svelte-h="svelte-zp1h75"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div> <p class="ml-4 text-primary-600">Memuat...</p></div>`}</div>`;
 });
 export {
   Layout as default

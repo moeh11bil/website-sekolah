@@ -16,6 +16,7 @@ const postRoutes = require('./routes/posts');
 const adminRoutes = require('./routes/admin');
 const quickLinksRoutes = require('./routes/quickLinks');
 const updateRoutes = require("./routes/update");
+const analyticsRoutes = require('./routes/analytics');
 const { listRoutes } = require('./utils/route-debug');
 
 // ... (other requires)
@@ -129,6 +130,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Public gallery route (diluar admin router untuk hindari Express 5 subrouter bug)
 app.get('/api/admin/public/gallery', async (req, res) => {

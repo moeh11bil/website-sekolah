@@ -6,7 +6,8 @@
     system: false,
     website: false,
     gallery: false,
-    posts: false
+    posts: false,
+    stats: false
   };
 
   // Variable to toggle the entire sidebar on mobile
@@ -30,6 +31,7 @@
     if (path.includes('/admin/header') || path.includes('/admin/about') || path.includes('/admin/school-info') || path.includes('/admin/theme') || path.includes('/admin/quick-links') || path.includes('/admin/staff-testimonials')) expandedSections.website = true;
     if (path.includes('/admin/gallery')) expandedSections.gallery = true;
     if (path.includes('/dashboard/posts')) expandedSections.posts = true;
+    if (path.includes('/admin/analytics')) expandedSections.stats = true;
   }
 </script>
 
@@ -60,6 +62,37 @@
 
     <div class="space-y-3">
       {#if currentRole === 'admin'}
+        <!-- Statistics -->
+        <div class="border-b border-primary-50 lg:border-none pb-2 lg:pb-0">
+          <button
+            on:click={() => toggleSection('stats')}
+            class="w-full flex items-center justify-between py-2 px-3 rounded-lg {expandedSections.stats ? 'bg-primary-100 text-primary-800' : 'text-gray-600 hover:bg-gray-50'} font-medium transition-colors duration-200"
+          >
+            <span class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Statistik
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200 {expandedSections.stats ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {#if expandedSections.stats}
+            <ul class="mt-1 ml-6 space-y-1 border-l-2 border-primary-200 pl-4 animate-in fade-in slide-in-from-top-2 duration-200">
+              <li>
+                <a href="/dashboard/admin/analytics" class="flex items-center w-full text-left py-2 px-3 rounded-lg truncate {$page.url.pathname === '/dashboard/admin/analytics' ? 'bg-primary-500 text-white shadow-sm' : 'hover:bg-primary-50 text-gray-600'} transition-colors duration-200 text-sm font-medium">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Pengunjung Web
+                </a>
+              </li>
+            </ul>
+          {/if}
+        </div>
+
         <!-- System Management -->
         <div class="border-b border-primary-50 lg:border-none pb-2 lg:pb-0">
           <button

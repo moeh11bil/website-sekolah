@@ -1,18 +1,31 @@
 <script lang="ts">
-  import { onMount, setContext } from 'svelte';
-  import { writable, derived, type Writable, type Readable } from 'svelte/store';
+  import { onMount, onDestroy, setContext } from 'svelte';
+  import { writable, derived, get, type Writable, type Readable } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import Header from '$lib/components/Header.svelte';
   import Footer from '$lib/components/Footer.svelte';
+  import Toast from '$lib/components/Toast.svelte';
+  import { toast } from '$lib/toast';
   import { themes, applyTheme, getCurrentTheme } from '$lib/theme';
+  import { auth } from '$lib/stores';
+  import { isTokenExpired } from '$lib/stores/auth';
+  import {
+    installSessionInterceptor,
+    forceLogout,
+    hasSessionExpiredNotice,
+    SESSION_EXPIRED_MESSAGE
+  } from '$lib/session';
   import { API_URL } from '$lib/config';
+  import { apiRequest } from '$lib/api';
   import type { User, AboutPage, SchoolInfo } from '$lib/types';
   import "../app.css";
 
   // 1. Create the stores here in the root layout
-  const user = writable<User | null>(null);
+  // `user` is kept as a mirror of the `auth` store so the Header/footer always
+  // reflect login state immediately (no full reload needed).
+  const user = writable<User | null>(get(auth).user);
   const aboutData = writable<AboutPage | null>(null);
   const schoolInfo = writable<SchoolInfo | null>(null);
 
@@ -27,17 +40,113 @@
   setContext<Writable<SchoolInfo | null>>('schoolInfoStore', schoolInfo);
   setContext<Readable<string>>('siteNameStore', siteName);
 
+  // Keep `user` in sync with the single source of truth (`auth`), so login /
+  // logout from anywhere (login page, API 401 handler, ...) updates the UI
+  // immediately without needing a page refresh.
+  const unsubscribeAuth = auth.subscribe(state => {
+    user.set(state.user);
+  });
+
+  onDestroy(() => {
+    unsubscribeAuth();
+    if (expiryTimer !== null) {
+      clearInterval(expiryTimer);
+      expiryTimer = null;
+    }
+  });
+
+  // --- Page view tracking (pengunjung web) ---
+  let lastTrackedPath: string | null = null;
+
+  function getVisitorId(): string {
+    let id = localStorage.getItem('visitorId');
+    if (!id) {
+      id =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `v-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+      localStorage.setItem('visitorId', id);
+    }
+    return id;
+  }
+
+  function trackPageView(pathname: string) {
+    if (!browser || !pathname || pathname === lastTrackedPath) return;
+    lastTrackedPath = pathname;
+    // Fire and forget: tracking tidak boleh memperlambat atau mengganggu UI
+    fetch(`${API_URL}/api/analytics/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: pathname, visitorId: getVisitorId() })
+    }).catch(() => {
+      /* abaikan - analitik tidak kritis */
+    });
+  }
+
+  // Track halaman pertama (saat load) lalu setiap navigasi client-side
+  $: if (browser) trackPageView($page.url.pathname);
+
+  // --- Sesi login: paksa logout bila token habis ---
+  let expiryTimer: number | null = null;
+
+  /** Ambil data user terbaru dari server dan sinkronkan ke store. */
+  async function syncCurrentUser(): Promise<void> {
+    const state = get(auth);
+    if (!state.isAuthenticated) return;
+    try {
+      const response = await apiRequest('/api/auth/me');
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.user) auth.updateUser(data.user);
+      }
+    } catch {
+      /* jaringan bermasalah - pakai data lokal, jangan blokir tampilan */
+    }
+  }
+
   // Function to handle logout
   function handleLogout() {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    user.set(null);
+    auth.logout();
     aboutData.set(null);
     goto('/login');
   }
 
   // Apply theme on mount
   onMount(async () => {
+    // Penjepit 401 global: response API 401 (mis. token dicabut server)
+    // langsung memicu logout paksa + redirect login
+    installSessionInterceptor();
+
+    // Sesi dinyatakan berakhir saat halaman dibuka (token kedaluwarsa
+    // terdeteksi saat load) - beri tahu pengguna, paksa login bila di dashboard
+    if (hasSessionExpiredNotice()) {
+      toast.warning(SESSION_EXPIRED_MESSAGE, 8000);
+      if ($page.url.pathname.startsWith('/dashboard')) {
+        goto('/login?reason=expired');
+      }
+    }
+
+    // Periksa berkala (15 detik) apakah token sudah habis masa berlakunya
+    // selama pengguna membuka halaman - jangan sampai tampilan tetap "admin"
+    // padahal sesi sudah tidak berlaku.
+    expiryTimer = window.setInterval(() => {
+      const state = get(auth);
+      if (state.isAuthenticated && isTokenExpired(state.token)) {
+        forceLogout();
+      }
+    }, 15000);
+
+    // Sinkronkan data user (role terbaru) dari server saat aplikasi dibuka.
+    // Bila token ditolak server, penjepit 401 akan memicu logout paksa.
+    // Non-blocking: tidak menunda pemuatan theme/konten.
+    syncCurrentUser().catch(() => {});
+
+    // Show a logout confirmation toast (set by the Header on logout) and clear the flag
+    if (localStorage.getItem('logoutSuccess') === 'true') {
+      localStorage.removeItem('logoutSuccess');
+      toast.success('Anda telah berhasil logout.');
+    }
+
     // Apply theme if in browser
     if (browser) {
       let themeName = getCurrentTheme(); // default to localStorage
@@ -62,17 +171,6 @@
       // Update DOM attribute
       const root = document.documentElement;
       root.setAttribute('data-theme', themeName);
-    }
-
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        user.set(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from localStorage", e);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-      }
     }
 
     // Fetch about page data
@@ -111,4 +209,5 @@
     <slot />
   </main>
   <Footer />
+  <Toast />
 </div>

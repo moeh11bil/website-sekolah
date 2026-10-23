@@ -1,4 +1,4 @@
-import { c as create_ssr_component, g as getContext, d as add_attribute } from "../../../../../../chunks/ssr.js";
+import { c as create_ssr_component, g as getContext, b as add_attribute } from "../../../../../../chunks/ssr.js";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   getContext("userStore");
   let username = "";

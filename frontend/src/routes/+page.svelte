@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, getContext } from 'svelte';
+  import { onMount, onDestroy, getContext } from 'svelte';
   import { API_URL, getImageUrl, formatLinkUrl } from '$lib/config';
   import StaffTestimonialCarousel from '$lib/components/StaffTestimonialCarousel.svelte';
   import type { Readable } from 'svelte/store';
@@ -26,7 +26,76 @@
   let loading = true;
   let error: string | null = null;
 
+  // Statistik kunjungan (card promosi)
+  interface VisitorStats {
+    totalViews: number;
+    totalUniqueVisitors: number;
+    viewsToday: number;
+    uniqueVisitorsToday: number;
+  }
+
+  let visitorStats: VisitorStats | null = null;
+  let displayed = { views: 0, unique: 0, today: 0 };
+
+  function formatNumber(value: number): string {
+    return value.toLocaleString('id-ID');
+  }
+
+  // Angka naik halus dari 0 ke nilai sebenarnya saat data tiba
+  function animateCounters(stats: VisitorStats) {
+    const duration = 1000;
+    const start = performance.now();
+    const targets = {
+      views: stats.totalViews,
+      unique: stats.totalUniqueVisitors,
+      today: stats.viewsToday
+    };
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      displayed = {
+        views: Math.round(targets.views * eased),
+        unique: Math.round(targets.unique * eased),
+        today: Math.round(targets.today * eased)
+      };
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function applyVisitorStats(data: VisitorStats, animate: boolean) {
+    visitorStats = data;
+    if (animate) {
+      animateCounters(data);
+    } else {
+      displayed = {
+        views: data.totalViews,
+        unique: data.totalUniqueVisitors,
+        today: data.viewsToday
+      };
+    }
+  }
+
+  function fetchVisitorStats(animate: boolean = false) {
+    fetch(`${API_URL}/api/analytics/summary`)
+      .then(res => (res.ok ? res.json() : null))
+      .then((data: VisitorStats | null) => {
+        if (data) applyVisitorStats(data, animate);
+      })
+      .catch(() => {
+        /* analitik tidak kritis - card tidak ditampilkan bila gagal */
+      });
+  }
+
+  let statsRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
   onMount(async () => {
+    fetchVisitorStats(true); // animasi count-up saat pertama tampil
+
+    // Segarkan tiap 60 detik agar angka ikut update (mis. setelah admin mereset)
+    statsRefreshTimer = setInterval(() => fetchVisitorStats(false), 60 * 1000);
+
     try {
       const [headerRes, linksRes] = await Promise.all([
         fetch(`${API_URL}/api/admin/public/header`),
@@ -46,6 +115,10 @@
     } finally {
       loading = false;
     }
+  });
+
+  onDestroy(() => {
+    if (statsRefreshTimer) clearInterval(statsRefreshTimer);
   });
 
   const getTitle = () => {
@@ -174,6 +247,52 @@
     <a href="/galeri" class="inline-block text-primary-600 hover:text-primary-800 font-medium mt-2">Lihat Galeri &rarr;</a>
   </div>
 </section>
+
+<!-- Visitor Stats Card (promosi kunjungan) -->
+{#if visitorStats}
+<section class="mb-12">
+  <div class="relative overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 p-8 md:p-10 text-white">
+    <div class="absolute -top-16 -right-12 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-20 -left-12 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative flex flex-col lg:flex-row lg:items-center gap-8 justify-between">
+      <div class="max-w-xl">
+        <span class="inline-flex items-center gap-2 bg-white/15 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Statistik Kunjungan
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold mt-4 mb-3 font-serif leading-tight">
+          Terima Kasih Telah Berkunjung!
+        </h2>
+        <p class="text-primary-100 leading-relaxed">
+          Ribuan pengunjung telah membaca kabar dan menjelajahi halaman ini. Jadilah bagian dari komunitas kami dan ikuti perkembangan terbaru setiap hari.
+        </p>
+        <a href="/blog" class="mt-5 inline-block bg-white text-primary-700 font-bold py-2.5 px-6 rounded-full shadow-lg hover:bg-primary-50 transition-all duration-300 transform hover:scale-105">
+          Baca Kabar Terbaru &rarr;
+        </a>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 md:gap-5 flex-shrink-0">
+        <div class="bg-white/10 border border-white/15 rounded-xl p-4 md:p-5 text-center backdrop-blur-sm min-w-[96px] md:min-w-[140px]">
+          <p class="text-2xl md:text-4xl font-bold tabular-nums">{formatNumber(displayed.views)}</p>
+          <p class="text-[11px] md:text-sm text-primary-100 mt-1">Total Kunjungan</p>
+        </div>
+        <div class="bg-white/10 border border-white/15 rounded-xl p-4 md:p-5 text-center backdrop-blur-sm min-w-[96px] md:min-w-[140px]">
+          <p class="text-2xl md:text-4xl font-bold tabular-nums">{formatNumber(displayed.unique)}</p>
+          <p class="text-[11px] md:text-sm text-primary-100 mt-1">Pengunjung Unik</p>
+        </div>
+        <div class="bg-emerald-400/90 border border-emerald-300/50 rounded-xl p-4 md:p-5 text-center backdrop-blur-sm min-w-[96px] md:min-w-[140px]">
+          <p class="text-2xl md:text-4xl font-bold text-white tabular-nums">{formatNumber(displayed.today)}</p>
+          <p class="text-[11px] md:text-sm text-emerald-50 mt-1">Hari Ini</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{/if}
 
 <!-- Call to Action (Updated to use dynamic link for registration) -->
 <section class="bg-gradient-to-r from-primary-500 to-primary-600 p-10 rounded-2xl text-center shadow-2xl mb-12">

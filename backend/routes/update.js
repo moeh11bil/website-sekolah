@@ -44,7 +44,10 @@ function isRunning(pid) {
   }
 }
 
-function cleanupJob() {
+function cleanupJob(jobId) {
+  // Hanya bersihkan job yang cocok, agar status job lain yang sedang
+  // berjalan tidak ikut terhapus oleh request jobId yang salah/kedaluwarsa
+  if (currentJob && jobId && currentJob.id !== jobId) return;
   currentJob = null;
   try { fs.unlinkSync(path.join(LOG_DIR, 'update.lock')); } catch (e) {}
 }
@@ -145,10 +148,17 @@ router.post('/apply', protect, authorize(['admin']), async (req, res) => {
 
 router.get('/status/:jobId', protect, authorize(['admin']), async (req, res) => {
   const jobId = req.params.jobId;
+
+  // jobId selalu berformat alphanumeric (lihat route /apply).
+  // Tolak karakter lain agar tidak bisa dipakai untuk path traversal.
+  if (!/^[a-z0-9]+$/i.test(jobId)) {
+    return res.status(400).json({ success: false, message: 'Invalid job id' });
+  }
+
   const logPath = logFile(jobId);
 
   if (!fs.existsSync(logPath)) {
-    cleanupJob();
+    cleanupJob(jobId);
     return res.json({ success: true, data: { running: false, logs: [], done: false } });
   }
 
@@ -158,7 +168,7 @@ router.get('/status/:jobId', protect, authorize(['admin']), async (req, res) => 
   const done = content.includes('DONE');
 
   if (done) {
-    cleanupJob();
+    cleanupJob(jobId);
     return res.json({
       success: true,
       data: { running: false, logs, done }
@@ -171,7 +181,7 @@ router.get('/status/:jobId', protect, authorize(['admin']), async (req, res) => 
   }
 
   if (!running) {
-    cleanupJob();
+    cleanupJob(jobId);
   }
 
   res.json({

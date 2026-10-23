@@ -21,7 +21,18 @@ echo ""
 echo "[1/7] Cloning repository..."
 if [ -d "$DEPLOY_DIR" ]; then
     cd "$DEPLOY_DIR"
+    # Amankan .env sebelum pull: file ini sudah TIDAK dilacak git, dan
+    # `git pull` akan menghapusnya dari working tree karena tercatat di
+    # commit lama. Simpan dulu, kembalikan setelah pull.
+    ENV_BACKUP="$(mktemp -d)"
+    for f in backend/.env backend/.env.production; do
+        if [ -f "$f" ]; then cp "$f" "$ENV_BACKUP/$(basename "$f")"; fi
+    done
     git pull origin main
+    for f in backend/.env backend/.env.production; do
+        if [ -f "$ENV_BACKUP/$(basename "$f")" ]; then cp "$ENV_BACKUP/$(basename "$f")" "$f"; fi
+    done
+    rm -rf "$ENV_BACKUP"
 else
     git clone "$REPO_URL" "$DEPLOY_DIR"
     cd "$DEPLOY_DIR"

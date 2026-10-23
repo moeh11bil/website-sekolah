@@ -12,6 +12,11 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
+  // Penolakan CORS adalah masalah policy di sisi klien, bukan error server
+  if (message === 'Not allowed by CORS') {
+    statusCode = 403;
+  }
+
   if (err.name === 'CastError' && err.kind === 'ObjectId') {
     statusCode = 400;
     message = 'Invalid ID format';

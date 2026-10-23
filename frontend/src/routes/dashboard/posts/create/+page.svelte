@@ -399,7 +399,9 @@
       </div>
     {/if}
 
-    <form on:submit|preventDefault={handleSubmit}>
+    <!-- Enter di input memicu submit form: arahkan ke aksi utama (publish),
+         bukan mengirim Event ke param isDraft seperti sebelumnya -->
+    <form on:submit|preventDefault={() => handleSubmit(false)}>
       <div class="mb-6">
         <label for="title" class="block text-gray-700 text-sm font-semibold mb-2">Judul Postingan</label>
         <div class="relative">

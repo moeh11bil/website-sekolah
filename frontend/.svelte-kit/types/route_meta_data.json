@@ -5,6 +5,7 @@
 	"/dashboard": [],
 	"/dashboard/admin": [],
 	"/dashboard/admin/about": [],
+	"/dashboard/admin/analytics": [],
 	"/dashboard/admin/categories": [],
 	"/dashboard/admin/categories/create": [],
 	"/dashboard/admin/categories/edit/[id]": [],

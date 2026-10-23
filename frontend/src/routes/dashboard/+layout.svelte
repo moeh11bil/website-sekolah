@@ -1,18 +1,17 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores';
+  import { hasSessionExpiredNotice } from '$lib/session';
   import Sidebar from './Sidebar.svelte';
-  import Toast from '$lib/components/Toast.svelte';
 
   $: currentRole = $auth.user?.role;
 
-  // Cek autentikasi secara reaktif
+  // Cek autentikasi secara reaktif - bila logout karena sesi berakhir,
+  // arahkan dengan penanda ?reason=expired agar login menampilkan pesan
   $: if (!$auth.isAuthenticated && typeof window !== 'undefined') {
-    goto('/login');
+    goto(hasSessionExpiredNotice() ? '/login?reason=expired' : '/login');
   }
 </script>
-
-<Toast />
 
 <div class="container mx-auto p-4 md:p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-xl mt-6 mb-8">
   {#if currentRole}

@@ -146,15 +146,14 @@ async function migrateDatabase() {
       );
     `);
 
-    // Insert default users
+    // Insert default users - HANYA bila belum ada (INSERT IGNORE).
+    // Sebelumnya pakai ON DUPLICATE KEY UPDATE password/role yang berarti
+    // menjalankan ulang migrasi akan mereset password SEMUA user ke admin123.
     await connection.query(`
-      INSERT INTO users (username, password, role) VALUES
+      INSERT IGNORE INTO users (username, password, role) VALUES
       ('admin', '$2b$10$e/PgvvJzq/YTsSSeA2mg1uQuAP2PCDgEOwz4IxLbEiVrX45R1WFfq', 'admin'),
       ('teacher1', '$2b$10$e/PgvvJzq/YTsSSeA2mg1uQuAP2PCDgEOwz4IxLbEiVrX45R1WFfq', 'teacher'),
-      ('student1', '$2b$10$e/PgvvJzq/YTsSSeA2mg1uQuAP2PCDgEOwz4IxLbEiVrX45R1WFfq', 'student')
-      ON DUPLICATE KEY UPDATE
-      password = VALUES(password),
-      role = VALUES(role);
+      ('student1', '$2b$10$e/PgvvJzq/YTsSSeA2mg1uQuAP2PCDgEOwz4IxLbEiVrX45R1WFfq', 'student');
     `);
 
     // Insert default categories
