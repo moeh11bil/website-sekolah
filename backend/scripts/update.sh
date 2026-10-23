@@ -12,6 +12,28 @@ log() {
   echo "[$(date '+%H:%M:%S')] $1" >> "$LOG_FILE"
 }
 
+# Pastikan node/npm/pm2 (nvm aaPanel) tersedia di PATH
+NVM_BIN=$(ls -d /www/server/nvm/versions/node/*/bin 2>/dev/null | tail -1)
+if [ -n "$NVM_BIN" ]; then
+  export PATH="$NVM_BIN:$PATH"
+fi
+
+# Jalankan pm2 sesuai hak: root langsung; user situs (www) lewat wrapper
+# sudoers terbatas /usr/local/bin/pm2-www-restart (hanya jlist & restart
+# nama backend) bila tersedia, dengan jatuh balik ke pm2 biasa.
+run_pm2() {
+  if [ "$(id -u)" -eq 0 ]; then
+    pm2 "$@"
+    return $?
+  fi
+  if [ -x /usr/local/bin/pm2-www-restart ] && command -v sudo >/dev/null 2>&1; then
+    if sudo -n /usr/local/bin/pm2-www-restart "$@" 2>/dev/null; then
+      return 0
+    fi
+  fi
+  pm2 "$@"
+}
+
 error_cleanup() {
   log "Error: Proses update gagal!"
 }
@@ -76,7 +98,7 @@ log "Update selesai! Restart server via pm2..."
 # Nama proses pm2 berbeda antar deploy (backend / website-sekolah /
 # sekolah-backend). Deteksi berdasarkan path script yang dijalankan agar
 # restart selalu kena, dan gagal restart TIDAK diam-diam.
-BACKEND_PM2_NAMES=$(pm2 jlist 2>/dev/null | node -e '
+BACKEND_PM2_NAMES=$(run_pm2 jlist 2>/dev/null | node -e '
   try {
     const list = JSON.parse(require("fs").readFileSync(0, "utf8"));
     const names = list
@@ -90,7 +112,7 @@ BACKEND_PM2_NAMES=$(pm2 jlist 2>/dev/null | node -e '
 
 restarted=0
 for name in $BACKEND_PM2_NAMES; do
-  if pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
+  if run_pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
     log "Backend pm2 '$name' direstart"
     restarted=1
   fi
@@ -99,7 +121,7 @@ done
 if [ "$restarted" -eq 0 ]; then
   # Cadangan: coba nama umum yang dipakai skrip deploy / panduan
   for name in backend website-sekolah sekolah-backend; do
-    if pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
+    if run_pm2 restart "$name" --update-env >> "$LOG_FILE" 2>&1; then
       log "Backend pm2 '$name' direstart"
       restarted=1
       break
