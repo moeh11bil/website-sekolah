@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
+    content LONGTEXT NOT NULL,
     author_id INT NOT NULL,
     category_id INT,
     status ENUM('draft', 'pending_approval', 'published') NOT NULL DEFAULT 'draft',

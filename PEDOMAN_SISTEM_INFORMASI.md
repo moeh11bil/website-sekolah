@@ -27,10 +27,11 @@ Aplikasi Website Sekolah adalah sistem informasi berbasis web yang dirancang unt
 - Menyediakan sistem autentikasi untuk berbagai peran (admin, guru, siswa)
 
 ### Teknologi yang Digunakan
-- **Frontend**: SvelteKit, TailwindCSS, TypeScript
+- **Frontend**: SvelteKit, TailwindCSS, TypeScript (adapter-static → `frontend/build`)
 - **Backend**: Node.js, Express.js
-- **Database**: MySQL/MariaDB
-- **Server Web**: Apache (untuk deployment produksi)
+- **Database**: MySQL/MariaDB (produksi: MariaDB)
+- **Server Web**: **Nginx** (aaPanel) — root `frontend/build`, proxy `/api` ke backend `:3001`
+- **Proses**: pm2 (nama proses `website-sekolah`)
 
 ---
 
@@ -61,7 +62,7 @@ Aplikasi ini mengikuti arsitektur berbasis microservices dengan pembagian antara
 
 ## Struktur Database
 
-Database `school_website` terdiri dari beberapa tabel utama:
+Database `sekolah_modern` terdiri dari beberapa tabel utama:
 
 ### Tabel `users`
 - **Deskripsi**: Menyimpan informasi pengguna (admin, guru, siswa)
@@ -84,7 +85,7 @@ Database `school_website` terdiri dari beberapa tabel utama:
 - **Field**:
   - `id` (INT, AUTO_INCREMENT, PRIMARY KEY): ID unik postingan
   - `title` (VARCHAR(255)): Judul postingan
-  - `content` (TEXT): Isi postingan
+  - `content` (LONGTEXT): Isi postingan
   - `author_id` (INT): ID pengguna sebagai penulis
   - `category_id` (INT): ID kategori (foreign key ke tabel categories)
   - `status` (ENUM('draft', 'pending_approval', 'published')): Status postingan
@@ -144,6 +145,36 @@ Database `school_website` terdiri dari beberapa tabel utama:
   - `created_at` (TIMESTAMP): Waktu pembuatan
   - `updated_at` (TIMESTAMP): Waktu pembaruan terakhir
 
+### Tabel `quick_links`
+- **Deskripsi**: Tautan cepat di beranda (E-Learning, Perpustakaan, Absensi, dll.)
+- **Field**:
+  - `id` (INT, AUTO_INCREMENT, PRIMARY KEY): ID unik
+  - `title` (VARCHAR(255)): Judul tautan
+  - `url` (VARCHAR(500)): Alamat tautan
+  - `icon` (VARCHAR(100)): Nama ikon
+  - `created_at` / `updated_at` (TIMESTAMP)
+
+### Tabel `staff_testimonials`
+- **Deskripsi**: Testimoni/quote staf yang ditampilkan sebagai carousel
+- **Field**:
+  - `id` (INT, AUTO_INCREMENT, PRIMARY KEY): ID unik
+  - `name` (VARCHAR(255)): Nama staf
+  - `position` (VARCHAR(255)): Jabatan
+  - `quote` (TEXT): Isi quote
+  - `image_url` (VARCHAR(500)): URL foto
+  - `status` (ENUM('active','inactive')): Status tampil
+  - `sort_order` (INT): Urutan tampil
+  - `created_at` / `updated_at` (TIMESTAMP)
+
+### Tabel `page_views`
+- **Deskripsi**: Log kunjungan halaman untuk analitik pengunjung (tampil di kartu statistik beranda & dashboard admin)
+- **Catatan**: Dibuat **otomatis** oleh `routes/analytics.js` saat pertama kali dipakai (lazy migration) — tidak ada di `db_schema.sql`.
+- **Field**:
+  - `id` (BIGINT, AUTO_INCREMENT, PRIMARY KEY): ID unik
+  - `path` (VARCHAR(500)): Halaman yang dikunjungi
+  - `visitor_id` (VARCHAR(64)): Pengunjung unik (anonim)
+  - `viewed_at` (TIMESTAMP): Waktu kunjungan
+
 ---
 
 ## Fitur-Fitur Utama
@@ -152,6 +183,7 @@ Database `school_website` terdiri dari beberapa tabel utama:
 - Login dan registrasi untuk berbagai peran (admin, guru, siswa)
 - Proteksi akses berdasarkan peran pengguna
 - Manajemen sesi menggunakan JWT
+- **Penanganan sesi kedaluwarsa**: saat token habis, pengguna otomatis dikeluarkan dan diminta login ulang (dicek saat aplikasi dimuat, tiap 15 detik, lewat interceptor 401 global, dan di guard dashboard) — tidak ada tampilan "mode admin" yang tertinggal.
 
 ### 2. Manajemen Konten
 - Pembuatan dan pengelolaan postingan/artikel
@@ -178,15 +210,26 @@ Database `school_website` terdiri dari beberapa tabel utama:
 - Kategorisasi foto
 - Tampilan galeri responsif
 
+### 7. Analitik Pengunjung
+- Menghitung **total kunjungan** dan **pengunjung unik** (data anonim di tabel `page_views`)
+- Ditampilkan di kartu statistik beranda (publik) dan dashboard admin
+- Tombol **reset** di dashboard admin membersihkan sekaligus data yang tampil publik
+
+### 8. Update dari Dashboard
+- Tombol **Update** (dashboard admin) menarik kode terbaru, memasang dependensi, build frontend, lalu me-restart backend — otomatis
+- Sebelum update dibuat **cadangan** `.env` + snapshot kode di `backend/backups/update/`
+- Bila build gagal terjadi **auto-rollback** ke versi sebelumnya sehingga situs tidak rusak
+- Rincian lengkap: lihat [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
 ---
 
 ## Instalasi dan Konfigurasi
 
 ### Prasyarat
-- Node.js (versi 16 atau lebih baru)
-- npm atau yarn
+- Node.js 18+ (produksi memakai v24 via nvm aaPanel)
+- npm
 - MySQL atau MariaDB
-- Apache (untuk deployment produksi)
+- Nginx (untuk deployment produksi) + pm2
 
 ### Langkah-langkah Instalasi
 
@@ -211,19 +254,21 @@ npm install
 ```
 
 #### 3. Konfigurasi database
-- Buat database MySQL/MariaDB dengan nama `school_website`
+- Buat database MySQL/MariaDB dengan nama `sekolah_modern`
 - Eksekusi skrip `db_schema.sql` untuk membuat struktur tabel
 
 #### 4. Konfigurasi environment
 - Di direktori `backend`, buat file `.env` berdasarkan contoh berikut:
 ```
 DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=123
-DB_NAME=school_website
-JWT_SECRET=kunci_rahasia_jwt
-BACKEND_PORT=3001
+DB_PORT=3306
+DB_USER=website_db
+DB_PASSWORD=<rahasia-anda>
+DB_NAME=sekolah_modern
+JWT_SECRET=<64-hex acak: openssl rand -hex 32>
+PORT=3001
 ```
+> Jangan pakai password bawaan `123` di produksi. `.env` tidak boleh di-commit ke git.
 
 #### 5. Jalankan aplikasi
 ```bash
@@ -300,32 +345,33 @@ npm run dev
 
 ## Deploy Aplikasi ke Produksi
 
+Rincian lengkap dan langkah demi langkah ada di **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**. Ringkasannya:
+
 ### 1. Build Frontend
 ```bash
 cd frontend
-npm run build
+npm run build        # hasil → frontend/build (adapter-static)
 ```
 
-### 2. Deploy ke Web Server
-- File-file hasil build ada di direktori `frontend/build`
-- Salin file-file tersebut ke document root web server (misalnya `/var/www/html/` di Ubuntu atau `/srv/http/` di Arch Linux)
+### 2. Sajikan Frontend (Nginx)
+- Hasil build ada di `frontend/build` — nginx diatur `root` ke direktori ini (SPA fallback ke `index.html`).
 
-### 3. Konfigurasi Apache
-- File `.htaccess` telah disediakan untuk menangani routing SPA
-- Aktifkan mod_rewrite di Apache jika belum aktif
+### 3. Reverse Proxy API (Nginx)
+- `location /api` di-proxy ke backend `http://127.0.0.1:3001`.
 
-### 4. Jalankan Backend
-- Backend harus selalu berjalan agar API dapat diakses
-- Gunakan PM2 atau systemd untuk menjaga backend tetap berjalan
+### 4. Jalankan Backend (pm2)
+- Backend harus selalu hidup → dijalankan pm2 (nama proses `website-sekolah`), user `www`.
 
-### 5. Konfigurasi Reverse Proxy (Opsional)
-- Gunakan Nginx atau Apache sebagai reverse proxy untuk mengarahkan permintaan ke backend
-- Konfigurasi SSL/TLS untuk koneksi HTTPS
+### 5. SSL/CDN
+- HTTPS via **Cloudflare** di depan domain (bukan Let's Encrypt langsung di server ini).
 
-### 6. Backup dan Monitoring
-- Lakukan backup database secara berkala
-- Monitor kinerja dan keamanan aplikasi
-- Update sistem dan dependensi secara rutin
+### 6. Update Kode
+- **Utama**: tombol **Update** di dashboard admin (jalankan `backend/scripts/update.sh`) — ada cadangan + auto-rollback.
+- **Cadangan**: update manual `git fetch` + `git reset --hard origin/main` lewat SSH (jangan `git pull` polos; `.env` tidak di-git).
+
+### 7. Backup dan Monitoring
+- Backup DB terjadwal (`mysqldump`) + cadangan `.env`/kode otomatis di `backend/backups/update/`.
+- Monitor: `pm2 status` / `pm2 logs website-sekolah`.
 
 ---
 
