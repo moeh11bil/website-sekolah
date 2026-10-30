@@ -53,23 +53,12 @@ app.use(helmet({
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = [
-      FRONTEND_URL,
-      `https://${DOMAIN}`,
-      `http://${DOMAIN}`,
-      'http://localhost:5173',
-      'http://localhost:4173',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:4173',
-      `https://api.${DOMAIN}`,
-      `http://api.${DOMAIN}`
-    ];
-    
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Refleksikan origin agar aplikasi berjalan di domain mana pun
+    // (termasuk domain otomatis Coolify) tanpa konfigurasi manual.
+    if (!origin) {
+      return callback(null, true);
     }
+    callback(null, origin);
   },
   credentials: true,
   optionsSuccessStatus: 200
